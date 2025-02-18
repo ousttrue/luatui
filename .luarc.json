@@ -1,0 +1,10 @@
+{
+  "workspace": {
+    "checkThirdParty": true,
+    "library": ["${3rd}/luv/library"]
+  },
+  "runtime.version": "LuaJIT",
+  "runtime.special": {
+    "love.filesystem.load": "loadfile"
+  }
+}
