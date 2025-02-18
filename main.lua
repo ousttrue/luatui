@@ -2,12 +2,14 @@
 local uv = require "luv"
 
 local ESC = "\x1b"
-local CSI = "\x1b"
-
+local CSI = "\x1b["
 local bit = require "bit"
 local ffi = require "ffi"
-local kernel32 = ffi.load "kernel32"
 
+--
+-- win32
+--
+local kernel32 = ffi.load "kernel32"
 ffi.cdef [[
 typedef unsigned int UINT;
 typedef long   BOOL;
@@ -118,11 +120,19 @@ function Screen:input(src)
 end
 
 function Screen:render()
+  uv.write(self.stdout, "\x1b[?25l")
+
   -- clear
   uv.write(self.stdout, CSI .. "1;1H")
   uv.write(self.stdout, CSI .. "2J")
+  -- info
+  uv.write(self.stdout, CSI .. "1;1H")
+  uv.write(self.stdout, ("xy (%d:%d)/(%d:%d)"):format(self.cursor_x, self.cursor_y, self.width, self.height))
+
   -- cursor
-  uv.write(self.stdout, CSI .. ("%d;%dH"):format(self.cursor_x + 1, self.cursor_y + 1))
+  uv.write(self.stdout, CSI .. ("%d;%dH"):format(self.cursor_y + 1, self.cursor_x + 1))
+
+  uv.write(self.stdout, "\x1b[?25h")
 end
 
 local g_tty_in
@@ -152,7 +162,7 @@ uv.read_start(g_tty_in, function(err, data)
     uv.close(g_tty_in)
   elseif data then
     local n = string.byte(data, 1, 1)
-    if n == 3 then
+    if n == 3 or data == "q" then
       -- ctrl-c
       uv.read_stop(g_tty_in)
     else
