@@ -14,3 +14,9 @@ cmake_generator = "Visual Studio 17 2022"
 > .\luarocks\bin\activate.ps1
 > luarocks install luv
 ```
+
+```sh
+# pwsh
+> $env:LUA_PATH=$null
+> lua main.lua
+```
