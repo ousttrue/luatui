@@ -13,6 +13,8 @@ cmake_generator = "Visual Studio 17 2022"
 ```sh
 > .\luarocks\bin\activate.ps1
 > luarocks install luv
+> luarocks install luautf8
+> luarocks install wcwidth
 ```
 
 ```sh

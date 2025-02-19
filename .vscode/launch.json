@@ -5,21 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "launch process",
-            "request": "launch",
-            "runtimeArgs": "${workspaceFolder}/main.lua",
-            "runtimeExecutable": "${workspaceFolder}/luarocks/bin/lua.exe",
-            "stopOnEntry": true,
-            "type": "lua",
-            "luaVersion": "luajit",
-        },
-        {
             "name": "Debug Lua Interpreter",
             "type": "lua-local",
             "request": "launch",
             "program": {
                 "lua": "${workspaceFolder}/luarocks/bin/lua.exe",
-                "file": "${workspaceFolder}/main.lua"
+                "file": "${workspaceFolder}/utf8_width.lua"
             },
             "internalConsoleOptions": "openOnSessionStart",
         },
