@@ -22,10 +22,23 @@ local function get_winsize(uv, out)
   return 80, 24
 end
 
+---@param uv uv
+---@param out uv.uv_write_t
+---@param rt RenderTarget
+local function flush(uv, out, rt, rows)
+  for i = 0, rows - 1 do
+    local line = rt:get_line(i)
+    if line then
+      uv.write(out, ("\x1b[%d;1H%s"):format(i + 1, line))
+    end
+  end
+end
+
 ---@class Screen
 ---@field uv uv
 ---@field out uv.uv_write_t
 ---@field splitter Splitter
+---@field focus? Grid
 local Screen = {}
 Screen.__index = Screen
 
@@ -39,6 +52,12 @@ function Screen.new(uv, out)
     out = out,
     splitter = Splitter.new(width, height),
   }, Screen)
+
+  local content = self.splitter.contents[1]
+  ---@cast content Grid
+  self.focus = content
+
+  self:render()
   return self
 end
 
@@ -58,13 +77,12 @@ function Screen:render()
   -- content
   local rt = RenderTarget.new()
   self.splitter:render(rt)
-  rt:flush(self.uv, self.out)
+  flush(self.uv, self.out, rt, self.splitter.height)
 
   -- cursor
-  -- self.uv.write(self.rt, "\x1b[1;1H")
-  local focus, x, y = self.splitter:get_focus()
-  if focus and x and y then
-    self.uv.write(self.out, ("\x1b[%d;%dH"):format(focus.cursor_y + 1, focus.cursor_x + 1))
+  if self.focus then
+    local x, y = self.splitter:get_offset(self.focus)
+    self.uv.write(self.out, ("\x1b[%d;%dH"):format(self.focus.cursor_y + y + 1, self.focus.cursor_x + x + 1))
   end
 
   -- show cursor

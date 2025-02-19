@@ -1,60 +1,10 @@
----@class Grid
----@field rows integer
----@field cols integer
----@field cursor_x integer
----@field cursor_y integer
-local Grid = {}
-Grid.__index = Grid
-
----@return Grid
-function Grid.new()
-  local self = setmetatable({}, Grid)
-  return self
-end
-
----@param src string
----@return boolean consumed
-function Grid:input(src)
-  local consumed = false
-  if src == "h" then
-    self.cursor_x = self.cursor_x - 1
-    consumed = true
-  elseif src == "j" then
-    self.cursor_y = self.cursor_y + 1
-    consumed = true
-  elseif src == "k" then
-    self.cursor_y = self.cursor_y - 1
-    consumed = true
-  elseif src == "l" then
-    self.cursor_x = self.cursor_x + 1
-    consumed = true
-  else
-  end
-  -- clamp
-  if self.cursor_x < 0 then
-    self.cursor_x = 0
-  elseif self.cursor_x >= self.cols then
-    self.cursor_x = self.cols - 1
-  end
-  if self.cursor_y < 0 then
-    self.cursor_y = 0
-  elseif self.cursor_y >= self.rows then
-    self.cursor_y = self.rows - 1
-  end
-  return consumed
-end
-
----@param rt RenderTarget
-function Grid:render(rt)
-  -- info
-  rt:write(0, 0, ("xy (%d:%d)/(%d:%d)"):format(self.cursor_x, self.cursor_y, self.cols, self.rows))
-end
+local Grid = require "luatui.Grid"
 
 ---@class Splitter
 ---@field width integer
 ---@field height integer
 ---@field dir 'h'|'v' horizontal or vertical
----@field content Grid|Splitter|nil
+---@field contents (Splitter|Grid)[]
 local Splitter = {}
 Splitter.__index = Splitter
 
@@ -65,6 +15,7 @@ function Splitter.new(width, height, dir)
     width = width,
     height = height,
     dir = dir or "h",
+    contents = { Grid.new(height, width) },
   }, Splitter)
   return self
 end
@@ -72,8 +23,8 @@ end
 ---@param src string
 ---@return boolean consumed
 function Splitter:input(src)
-  if self.content then
-    local consumed = self.content:input(src)
+  for _, content in ipairs(self.contents) do
+    local consumed = content:input(src)
     return consumed
   end
   return false
@@ -81,14 +32,32 @@ end
 
 ---@param rt RenderTarget
 function Splitter:render(rt)
-  if self.content then
-    self.content:render(rt)
+  for _, content in ipairs(self.contents) do
+    content:render(rt)
   end
 end
 
----@return Grid?
+---@param target Grid
 ---@return integer? offset_x
 ---@return integer? offset_y
-function Splitter:get_focus() end
+function Splitter:get_offset(target)
+  local offset = 0
+  for _, content in ipairs(self.contents) do
+    local x, y = content:get_offset(target)
+    if x and y then
+      if self.dir == "v" then
+        return offset + x, y
+      elseif self.dir == "h" then
+        return x, offset + y
+      end
+    end
+    if self.dir == "v" then
+      offset = offset + content.width
+    elseif self.dir == "h" then
+      offset = offset + content.height
+    end
+  end
+  assert(false)
+end
 
 return Splitter
