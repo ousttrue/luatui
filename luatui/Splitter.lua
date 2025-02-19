@@ -5,7 +5,7 @@ local Size = require "luatui.Size"
 
 ---@class Callbacks
 ---@field keymap OnInput
----@field on_render OnRender
+---@field render OnRender
 
 ---@class Splitter
 ---@field current_size Size
@@ -43,12 +43,12 @@ end
 
 ---@param src string
 ---@return boolean consumed
-function Splitter:input(src)
+function Splitter:process_input(src)
   if self.callbacks then
     return self.callbacks.keymap(self, { size = self.current_size, src = src })
   else
     for _, child in ipairs(self.children) do
-      local consumed = child:input(src)
+      local consumed = child:process_input(src)
       return consumed
     end
     return false
@@ -67,7 +67,7 @@ function Splitter:render(rt, offset_x, offset_y)
   end
 
   if self.callbacks then
-    self.callbacks.on_render(rt, {
+    self.callbacks.render(rt, {
       y = offset_y,
       x = offset_x,
       width = self.current_size.width,
