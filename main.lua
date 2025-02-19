@@ -1,64 +1,11 @@
+print(package.path)
+
 ---@type uv
 local uv = require "luv"
+local win32_util = require "win32_util"
 
 local ESC = "\x1b"
 local CSI = "\x1b["
-local bit = require "bit"
-local ffi = require "ffi"
-
---
--- win32
---
-local kernel32 = ffi.load "kernel32"
-ffi.cdef [[
-typedef unsigned int UINT;
-typedef long   BOOL;
-typedef BOOL *   LPBOOL;
-typedef unsigned long DWORD;
-typedef char *   LPSTR;
-typedef const char * LPCSTR;
-typedef short *   LPWSTR;
-typedef const short * LPCWSTR;
-typedef void* HANDLE;
-
-HANDLE GetStdHandle(
-  DWORD nStdHandle
-);
-BOOL GetConsoleMode(
-  HANDLE  hConsoleHandle,
-  DWORD* lpMode
-);
-BOOL SetConsoleMode(
-  HANDLE hConsoleHandle,
-  DWORD  dwMode
-);
-]]
-
-local STD_INPUT_HANDLE = -10
-local STD_OUTPUT_HANDLE = -11
-local STD_ERROR_HANDLE = -12
-local ENABLE_VIRTUAL_TERMINAL_PROCESSING = 4
-
--- https://learn.microsoft.com/ja-jp/windows/console/console-virtual-terminal-sequences
-local function EnableVTMode()
-  -- Set output mode to handle virtual terminal sequences
-  local hOut = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-  if hOut == 0 then
-    return false
-  end
-
-  local dwMode = ffi.new "DWORD[1]"
-  if kernel32.GetConsoleMode(hOut, dwMode) == 0 then
-    return false
-  end
-
-  dwMode[0] = bit.bor(dwMode[0], ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-  if kernel32.SetConsoleMode(hOut, dwMode[0]) == 0 then
-    return false
-  end
-
-  return true
-end
 
 ---@class Screen
 ---@field stdout uv.uv_write_t
@@ -70,18 +17,28 @@ local Screen = {}
 Screen.__index = Screen
 
 ---@param fs uv.uv_write_t
----@return Screen
-function Screen.new(fs)
-  local width = 80
-  local height = 24
+---@return integer width
+---@return integer height
+local function get_winsize(fs)
   if uv.guess_handle(uv.fileno(fs)) == "tty" then
     local w, h = uv.tty_get_winsize(fs)
     if w and type(h) == "integer" then
-      width = w
-      height = h
+      return w, h
     end
   end
 
+  local w, h = win32_util.get_winsize()
+  if w and h then
+    return w, h
+  end
+
+  return 80, 24
+end
+
+---@param fs uv.uv_write_t
+---@return Screen
+function Screen.new(fs)
+  local width, height = get_winsize(fs)
   local self = setmetatable({
     stdout = fs,
     width = width,
