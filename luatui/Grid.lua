@@ -17,15 +17,6 @@ function Grid.new(rows, cols)
   return self
 end
 
----@param target Grid
----@return integer? offset_x
----@return integer? offset_y
-function Grid:get_offset(target)
-  if target == self then
-    return 0, 0
-  end
-end
-
 ---@param src string
 ---@return boolean consumed
 function Grid:input(src)
@@ -59,9 +50,9 @@ function Grid:input(src)
 end
 
 ---@param rt RenderTarget
-function Grid:render(rt)
+function Grid:render(rt, row, col)
   -- info
-  rt:write(0, 0, ("xy (%d:%d)/(%d:%d)"):format(self.cursor_x, self.cursor_y, self.cols, self.rows))
+  rt:write(row, col, ("xy (%d:%d)/(%d:%d)"):format(self.cursor_x, self.cursor_y, self.cols, self.rows))
 end
 
 return Grid

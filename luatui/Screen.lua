@@ -37,7 +37,7 @@ end
 ---@class Screen
 ---@field uv uv
 ---@field out uv.uv_write_t
----@field splitter Splitter
+---@field root Splitter
 ---@field focus? Grid
 local Screen = {}
 Screen.__index = Screen
@@ -50,12 +50,10 @@ function Screen.new(uv, out)
   local self = setmetatable({
     uv = uv,
     out = out,
-    splitter = Splitter.new(width, height),
+    root = Splitter.new(width, height),
   }, Screen)
 
-  local content = self.splitter.contents[1]
-  ---@cast content Grid
-  self.focus = content
+  self.focus = self.root.grid
 
   self:render()
   return self
@@ -63,7 +61,7 @@ end
 
 ---@param src string
 function Screen:input(src)
-  self.splitter:input(src)
+  self.root:input(src)
   self:render()
 end
 
@@ -76,17 +74,16 @@ function Screen:render()
 
   -- content
   local rt = RenderTarget.new()
-  self.splitter:render(rt)
-  flush(self.uv, self.out, rt, self.splitter.height)
+  self.root:render(rt)
+  flush(self.uv, self.out, rt, self.root.height)
 
   -- cursor
   if self.focus then
-    local x, y = self.splitter:get_offset(self.focus)
+    local x, y = self.root:get_offset(self.focus)
     self.uv.write(self.out, ("\x1b[%d;%dH"):format(self.focus.cursor_y + y + 1, self.focus.cursor_x + x + 1))
+    -- show cursor
+    self.uv.write(self.out, "\x1b[?25h")
   end
-
-  -- show cursor
-  self.uv.write(self.out, "\x1b[?25h")
 end
 
 return Screen

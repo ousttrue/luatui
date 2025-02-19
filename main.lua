@@ -25,6 +25,7 @@ else
 end
 
 local s = Screen.new(uv, stdout)
+s.root:split_vertical()
 
 uv.read_start(g_tty_in, function(err, data)
   if err then
