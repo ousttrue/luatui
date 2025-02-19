@@ -1,6 +1,8 @@
 local Size = require "luatui.Size"
 
----@alias OnInput fun(splitter: Splitter, input:{size: Size, data:string}):boolean
+---@alias KeyCommand 'exit'|nil
+
+---@alias OnInput fun(input:{size: Size, data:string, splitter: Splitter}):KeyCommand
 ---@alias OnRender fun(rt: RenderTarget, viewport:{x:integer, y:integer, width:integer, height:integer})
 
 ---@class Callbacks
@@ -39,20 +41,6 @@ function Splitter:split_vertical()
   local item2 = Splitter.new(self.current_size.width / 2, self.current_size.height)
   self.children = { item1, item2 }
   return item1, item2
-end
-
----@param src string
----@return boolean consumed
-function Splitter:process_input(src)
-  if self.callbacks then
-    return self.callbacks.keymap(self, { size = self.current_size, src = src })
-  else
-    for _, child in ipairs(self.children) do
-      local consumed = child:process_input(src)
-      return consumed
-    end
-    return false
-  end
 end
 
 ---@param rt RenderTarget

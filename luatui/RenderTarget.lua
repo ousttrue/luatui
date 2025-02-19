@@ -16,7 +16,7 @@ function RenderLine:write(col, str)
     table.insert(self.cells, " ")
   end
   for i = 1, #str do
-    self.cells[col + i + 1] = str:sub(i, i)
+    self.cells[col + i] = str:sub(i, i)
   end
 end
 
@@ -42,16 +42,57 @@ function RenderTarget.new()
   return self
 end
 
----@param str string
 ---@param row integer
----@param col integer
-function RenderTarget:write(row, col, str)
+---@return RenderLine
+function RenderTarget:get_or_create_line(row)
   local line = self.rows[row]
   if not line then
     line = RenderLine.new()
     self.rows[row] = line
   end
+  return line
+end
+
+---@param str string
+---@param row integer
+---@param col integer
+function RenderTarget:write(row, col, str)
+  local line = self:get_or_create_line(row)
   line:write(col, str)
+end
+
+-- ╭─╮
+-- │ │
+-- ╰─╯
+function RenderTarget:box(x, y, w, h, str)
+  do
+    local line = self:get_or_create_line(y)
+    line:write(x, "+")
+    for col = x + 1, x + w - 2 do
+      line:write(col, "-")
+    end
+    line:write(x + w - 1, "+")
+  end
+
+  for row = y + 1, y + h - 2 do
+    local line = self:get_or_create_line(row)
+    line:write(x, "|")
+    line:write(x + w - 1, "|")
+  end
+
+  do
+    local line = self:get_or_create_line(y + h - 1)
+    line:write(x, "+")
+    for col = x + 1, x + w - 2 do
+      line:write(col, "-")
+    end
+    line:write(x + w - 1, "+")
+  end
+
+  do
+    local line = self:get_or_create_line(y + math.floor(h / 2))
+    line:write(x + math.floor((w - #str) / 2), str)
+  end
 end
 
 ---@param i integer

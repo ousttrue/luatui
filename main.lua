@@ -62,14 +62,16 @@ end
 
 local function make_callbacks(c)
   return {
-    keymap = function(splitter, input)
+    keymap = function(input)
+      if input.data == "q" then
+        return "exit"
+      end
       if c:input(input) then
-        return true
+        return
       end
       if tab_function(input) then
-        return true
+        return
       end
-      return false
     end,
     render = function(rt, viewport)
       rt:write(viewport.y, viewport.x, c:label(viewport))
@@ -84,13 +86,8 @@ right.callbacks = make_callbacks(right_cursor)
 
 s.on_end_frame = function()
   local x, y = s.root:get_offset(s.focus)
-
   local c = s.focus == right and right_cursor or left_cursor
-  s:render(c.cursor_x + x + 1, c.cursor_y + y + 1)
+  s:show_cursor(c.cursor_x + x, c.cursor_y + y)
 end
-
--- ╭─── Live Grep ╮
--- │> round       │
--- ╰──────────────╯
 
 s:run()

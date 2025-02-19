@@ -55,6 +55,7 @@ function Screen.new(uv, output, input)
     input = input,
     root = Splitter.new(width, height),
   }, Screen)
+  self.focus = self.root
   self:render()
   return self
 end
@@ -92,16 +93,20 @@ function Screen:run()
     if err then
       self.uv.close(self.input)
     elseif data then
-      local n = string.byte(data, 1, 1)
-      if n == 3 or data == "q" then
-        -- ctrl-c
+      local keycommand
+      if self.focus then
+        keycommand = self.focus.callbacks.keymap({
+          size = self.focus.current_size,
+          data = data,
+          splitter = self.focus,
+        })
+      end
+      self:render()
+      if self.on_end_frame then
+        self.on_end_frame()
+      end
+      if keycommand == "exit" then
         self.uv.read_stop(self.input)
-      else
-        self:process_input(data)
-
-        if self.on_end_frame then
-          self.on_end_frame()
-        end
       end
     end
   end)
@@ -111,19 +116,15 @@ function Screen:run()
   self.uv.tty_reset_mode()
 end
 
----@param src string
-function Screen:process_input(src)
-  if self.focus and self.focus.callbacks then
-    self.focus.callbacks.keymap(self.focus, {
-      size = self.focus.current_size,
-      data = src,
-    })
-  else
-    self.root:process_input(src)
-  end
+---@param x 0 origin
+---@param y 0 origin
+function Screen:show_cursor(x, y)
+  self.uv.write(self.output, ("\x1b[%d;%dH"):format(y + 1, x + 1))
+  -- show cursor
+  self.uv.write(self.output, "\x1b[?25h")
 end
 
-function Screen:render(cursor_x, cursor_y)
+function Screen:render()
   -- hide cursor
   self.uv.write(self.output, "\x1b[?25l")
   -- clear
@@ -134,13 +135,6 @@ function Screen:render(cursor_x, cursor_y)
   local rt = RenderTarget.new()
   self.root:render(rt)
   flush(self.uv, self.output, rt, self.root.current_size.height)
-
-  -- cursor
-  if self.focus then
-    self.uv.write(self.output, ("\x1b[%d;%dH"):format(cursor_y, cursor_x))
-    -- show cursor
-    self.uv.write(self.output, "\x1b[?25h")
-  end
 end
 
 return Screen
