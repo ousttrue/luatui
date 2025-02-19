@@ -38,7 +38,7 @@ end
 ---@field uv uv
 ---@field out uv.uv_write_t
 ---@field root Splitter
----@field focus? Grid
+---@field focus Splitter?
 local Screen = {}
 Screen.__index = Screen
 
@@ -52,20 +52,23 @@ function Screen.new(uv, out)
     out = out,
     root = Splitter.new(width, height),
   }, Screen)
-
-  self.focus = self.root.grid
-
   self:render()
   return self
 end
 
 ---@param src string
 function Screen:input(src)
-  self.root:input(src)
-  self:render()
+  if self.focus and self.focus.callbacks then
+    self.focus.callbacks.on_input {
+      size = self.focus.current_size,
+      data = src,
+    }
+  else
+    self.root:input(src)
+  end
 end
 
-function Screen:render()
+function Screen:render(cursor_x, cursor_y)
   -- hide cursor
   self.uv.write(self.out, "\x1b[?25l")
   -- clear
@@ -75,12 +78,11 @@ function Screen:render()
   -- content
   local rt = RenderTarget.new()
   self.root:render(rt)
-  flush(self.uv, self.out, rt, self.root.height)
+  flush(self.uv, self.out, rt, self.root.current_size.height)
 
   -- cursor
   if self.focus then
-    local x, y = self.root:get_offset(self.focus)
-    self.uv.write(self.out, ("\x1b[%d;%dH"):format(self.focus.cursor_y + y + 1, self.focus.cursor_x + x + 1))
+    self.uv.write(self.out, ("\x1b[%d;%dH"):format(cursor_y, cursor_x))
     -- show cursor
     self.uv.write(self.out, "\x1b[?25h")
   end

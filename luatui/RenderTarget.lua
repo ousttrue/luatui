@@ -11,11 +11,19 @@ function RenderTarget.new()
   return self
 end
 
+local function fill(n)
+  local s = ""
+  for i = 1, n do
+    s = s .. " "
+  end
+  return s
+end
+
 ---@param str string
 ---@param row integer
 ---@param col integer
 function RenderTarget:write(row, col, str)
-  self.rows[row] = str
+  self.rows[row] = fill(col) .. str
 end
 
 ---@param i integer

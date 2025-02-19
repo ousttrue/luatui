@@ -1,46 +1,51 @@
-local Grid = require "luatui.Grid"
+local Size = require "luatui.Size"
+
+---@alias OnInput fun(input:{size: Size, data:string}):boolean
+---@alias OnRender fun(rt: RenderTarget, viewport:{x:integer, y:integer, width:integer, height:integer})
+
+---@class Callbacks
+---@field on_input OnInput
+---@field on_render OnRender
 
 ---@class Splitter
----@field width integer
----@field height integer
----@field dir 'h'|'v' horizontal or vertical
+---@field current_size Size
+---@field callbacks Callbacks?
+---@field child_dir 'h'|'v' horizontal or vertical
 ---@field children Splitter[]
----@field grid Grid?
 local Splitter = {}
 Splitter.__index = Splitter
 
----@param dir 'h'|'v'|nil
+---@param width integer
+---@param height integer
 ---@return Splitter
-function Splitter.new(width, height, dir)
+function Splitter.new(width, height)
   local self = setmetatable({
-    width = width,
-    height = height,
-    dir = dir or "h",
+    current_size = Size.new(width, height),
+    child_dir = "h",
     children = {},
-    grid = Grid.new(height, width),
   }, Splitter)
   return self
 end
 
 ---@return Splitter
+---@return Splitter
 function Splitter:split_vertical()
   self.dir = "v"
-  if #self.children == 0 then
-    -- move grid to 1st child
-    table.insert(self.children, Splitter.new(self.grid))
-    self.grid = nil
+  local item1 = Splitter.new(self.current_size.width / 2, self.current_size.height)
+  if self.callbacks then
+    item1.callbacks = self.callbacks
+    self.callbacks = nil
   end
-
-  local new_child = Splitter.new()
-  table.insert(self.children, new_child)
-  return new_child
+  local item2 = Splitter.new(self.current_size.width / 2, self.current_size.height)
+  self.children = { item1, item2 }
+  return item1, item2
 end
 
 ---@param src string
 ---@return boolean consumed
 function Splitter:input(src)
-  if self.grid then
-    return self.grid:input(src)
+  if self.callbacks then
+    return self.callbacks.on_input { size = self.current_size, src = src }
   else
     for _, child in ipairs(self.children) do
       local consumed = child:input(src)
@@ -61,38 +66,38 @@ function Splitter:render(rt, offset_x, offset_y)
     offset_y = 0
   end
 
-  if self.grid then
-    self.grid:render(rt, offset_y, offset_x)
+  if self.callbacks then
+    self.callbacks.on_render(rt, {
+      y = offset_y,
+      x = offset_x,
+      width = self.current_size.width,
+      height = self.current_size.height,
+    })
   else
     local offset = 0
     for _, child in ipairs(self.children) do
       if self.dir == "v" then
         child:render(rt, offset_x + offset, offset_y)
-        offset = offset + child.width
+        offset = offset + child.current_size.width
       elseif self.dir == "h" then
         child:render(rt, offset_x, offset_y + offset)
-        offset = offset + child.height
+        offset = offset + child.current_size.height
       end
     end
   end
 end
 
----@param grid Grid
+---@param target Splitter
 ---@return integer? offset_x
 ---@return integer? offset_y
-function Splitter:get_offset(grid)
-  if self.grid == grid then
+function Splitter:get_offset(target)
+  if self == target then
     return 0, 0
   end
 
   local offset = 0
   for _, child in ipairs(self.children) do
-    local x, y
-    if self.dir == "v" then
-      x, y = child:get_offset(grid)
-    elseif self.dir == "h" then
-      x, y = child:get_offset(grid)
-    end
+    local x, y = child:get_offset(target)
     if x and y then
       if self.dir == "v" then
         return offset + x, y
@@ -101,13 +106,11 @@ function Splitter:get_offset(grid)
       end
     end
     if self.dir == "v" then
-      offset = offset + child.width
+      offset = offset + child.current_size.width
     elseif self.dir == "h" then
-      offset = offset + child.height
+      offset = offset + child.current_size.height
     end
   end
-  -- assert(false)
-  return 0, 0
 end
 
 return Splitter
