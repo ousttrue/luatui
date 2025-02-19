@@ -1,10 +1,10 @@
 local Size = require "luatui.Size"
 
----@alias OnInput fun(input:{size: Size, data:string}):boolean
+---@alias OnInput fun(splitter: Splitter, input:{size: Size, data:string}):boolean
 ---@alias OnRender fun(rt: RenderTarget, viewport:{x:integer, y:integer, width:integer, height:integer})
 
 ---@class Callbacks
----@field on_input OnInput
+---@field keymap OnInput
 ---@field on_render OnRender
 
 ---@class Splitter
@@ -21,7 +21,7 @@ Splitter.__index = Splitter
 function Splitter.new(width, height)
   local self = setmetatable({
     current_size = Size.new(width, height),
-    child_dir = "h",
+    child_dir = "v",
     children = {},
   }, Splitter)
   return self
@@ -45,7 +45,7 @@ end
 ---@return boolean consumed
 function Splitter:input(src)
   if self.callbacks then
-    return self.callbacks.on_input { size = self.current_size, src = src }
+    return self.callbacks.keymap(self, { size = self.current_size, src = src })
   else
     for _, child in ipairs(self.children) do
       local consumed = child:input(src)

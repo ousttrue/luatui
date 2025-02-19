@@ -1,7 +1,6 @@
 ---@type uv
 local uv = require "luv"
 local Screen = require "luatui.Screen"
-local Splittr = require "luatui.Splitter"
 
 local g_tty_in
 if uv.guess_handle(0) == "tty" then
@@ -23,55 +22,87 @@ else
   uv.pipe_open(stdout, 1)
 end
 
-local c = {
-  cursor_x = 0,
-  cursor_y = 0,
-}
+---@class Cursor
+---@field cursor_x integer
+---@field cursor_y integer
+local Cursor = {}
+Cursor.__index = Cursor
+
+---@return Cursor
+function Cursor.new()
+  local self = setmetatable({
+    cursor_x = 0,
+    cursor_y = 0,
+  }, Cursor)
+  return self
+end
+
+function Cursor:input(input)
+  local consumed = false
+  if input.data == "h" then
+    self.cursor_x = self.cursor_x - 1
+    consumed = true
+  elseif input.data == "j" then
+    self.cursor_y = self.cursor_y + 1
+    consumed = true
+  elseif input.data == "k" then
+    self.cursor_y = self.cursor_y - 1
+    consumed = true
+  elseif input.data == "l" then
+    self.cursor_x = self.cursor_x + 1
+    consumed = true
+  else
+  end
+  -- clamp
+  if self.cursor_x < 0 then
+    self.cursor_x = 0
+  elseif self.cursor_x >= input.size.width then
+    self.cursor_x = input.size.width - 1
+  end
+  if self.cursor_y < 0 then
+    self.cursor_y = 0
+  elseif self.cursor_y >= input.size.height then
+    self.cursor_y = input.size.height - 1
+  end
+  return consumed
+end
+
+function Cursor:label(viewport)
+  return ("xy (%d:%d)/(%d:%d)"):format(self.cursor_x, self.cursor_y, viewport.width, viewport.height)
+end
 
 local s = Screen.new(uv, stdout)
 local left, right = s.root:split_vertical()
 s.focus = right
-right.callbacks = {
-  on_input = function(input)
-    local consumed = false
-    if input.data == "h" then
-      c.cursor_x = c.cursor_x - 1
-      consumed = true
-    elseif input.data == "j" then
-      c.cursor_y = c.cursor_y + 1
-      consumed = true
-    elseif input.data == "k" then
-      c.cursor_y = c.cursor_y - 1
-      consumed = true
-    elseif input.data == "l" then
-      c.cursor_x = c.cursor_x + 1
-      consumed = true
-    else
-    end
-    -- clamp
-    if c.cursor_x < 0 then
-      c.cursor_x = 0
-    elseif c.cursor_x >= input.size.width then
-      c.cursor_x = input.size.width - 1
-    end
-    if c.cursor_y < 0 then
-      c.cursor_y = 0
-    elseif c.cursor_y >= input.size.height then
-      c.cursor_y = input.size.height - 1
-    end
-    return consumed
-  end,
-  on_render = function(rt, viewport)
-    rt:write(
-      viewport.y,
-      viewport.x,
-      ("xy (%d:%d)/(%d:%d)"):format(c.cursor_x, c.cursor_y, viewport.width, viewport.height)
-    )
-    -- for y = viewport.y, viewport.y + viewport.height - 1 do
-    --   rt:write(y, viewport.x, "+")
-    -- end
-  end,
-}
+
+local function tab_function(input)
+  if input.data == "\t" then
+    s.focus = (s.focus == right) and left or right
+    return true
+  end
+end
+
+local function make_callbacks(c)
+  return {
+    keymap = function(splitter, input)
+      if c:input(input) then
+        return true
+      end
+      if tab_function(input) then
+        return true
+      end
+      return false
+    end,
+    on_render = function(rt, viewport)
+      rt:write(viewport.y, viewport.x, c:label(viewport))
+    end,
+  }
+end
+
+local left_cursor = Cursor.new()
+left.callbacks = make_callbacks(left_cursor)
+local right_cursor = Cursor.new()
+right.callbacks = make_callbacks(right_cursor)
 
 uv.read_start(g_tty_in, function(err, data)
   if err then
@@ -84,7 +115,9 @@ uv.read_start(g_tty_in, function(err, data)
     else
       s:input(data)
 
-      local x, y = s.root:get_offset(right)
+      local x, y = s.root:get_offset(s.focus)
+
+      local c = s.focus == right and right_cursor or left_cursor
       s:render(c.cursor_x + x + 1, c.cursor_y + y + 1)
     end
   end

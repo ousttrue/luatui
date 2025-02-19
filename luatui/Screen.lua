@@ -59,10 +59,10 @@ end
 ---@param src string
 function Screen:input(src)
   if self.focus and self.focus.callbacks then
-    self.focus.callbacks.on_input {
+    self.focus.callbacks.keymap(self.focus, {
       size = self.focus.current_size,
       data = src,
-    }
+    })
   else
     self.root:input(src)
   end
