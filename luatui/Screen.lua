@@ -1,4 +1,6 @@
 local win32_util = require "luatui.win32_util"
+local Splitter = require "luatui.Splitter"
+local RenderTarget = require "luatui.RenderTarget"
 
 ---@param uv uv
 ---@param out uv.uv_write_t
@@ -23,10 +25,7 @@ end
 ---@class Screen
 ---@field uv uv
 ---@field out uv.uv_write_t
----@field width integer
----@field height integer
----@field cursor_x integer
----@field cursor_y integer
+---@field splitter Splitter
 local Screen = {}
 Screen.__index = Screen
 
@@ -38,54 +37,37 @@ function Screen.new(uv, out)
   local self = setmetatable({
     uv = uv,
     out = out,
-    width = width,
-    height = height,
-    cursor_x = width / 2,
-    cursor_y = height / 2,
+    splitter = Splitter.new(width, height),
   }, Screen)
   return self
 end
 
 ---@param src string
 function Screen:input(src)
-  if src == "h" then
-    self.cursor_x = self.cursor_x - 1
-  elseif src == "j" then
-    self.cursor_y = self.cursor_y + 1
-  elseif src == "k" then
-    self.cursor_y = self.cursor_y - 1
-  elseif src == "l" then
-    self.cursor_x = self.cursor_x + 1
-  else
-  end
-  -- clamp
-  if self.cursor_x < 0 then
-    self.cursor_x = 0
-  elseif self.cursor_x >= self.width then
-    self.cursor_x = self.width - 1
-  end
-  if self.cursor_y < 0 then
-    self.cursor_y = 0
-  elseif self.cursor_y >= self.height then
-    self.cursor_y = self.height - 1
-  end
-
+  self.splitter:input(src)
   self:render()
 end
 
 function Screen:render()
+  -- hide cursor
   self.uv.write(self.out, "\x1b[?25l")
-
   -- clear
   self.uv.write(self.out, "\x1b[1;1H")
   self.uv.write(self.out, "\x1b[2J")
-  -- info
-  self.uv.write(self.out, "\x1b[1;1H")
-  self.uv.write(self.out, ("xy (%d:%d)/(%d:%d)"):format(self.cursor_x, self.cursor_y, self.width, self.height))
+
+  -- content
+  local rt = RenderTarget.new()
+  self.splitter:render(rt)
+  rt:flush(self.uv, self.out)
 
   -- cursor
-  self.uv.write(self.out, ("\x1b[%d;%dH"):format(self.cursor_y + 1, self.cursor_x + 1))
+  -- self.uv.write(self.rt, "\x1b[1;1H")
+  local focus, x, y = self.splitter:get_focus()
+  if focus and x and y then
+    self.uv.write(self.out, ("\x1b[%d;%dH"):format(focus.cursor_y + 1, focus.cursor_x + 1))
+  end
 
+  -- show cursor
   self.uv.write(self.out, "\x1b[?25h")
 end
 
