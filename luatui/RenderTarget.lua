@@ -96,9 +96,13 @@ function RenderTarget:box(x, y, w, h, str, box_opts)
     local line = self:get_or_create_line(y + math.floor(h / 2))
     local cols = 0
     for _, cp in utf8.codes(str) do
-      cols = cols + wcwidth(cp)
+      local wc = wcwidth(cp)
+      if cols + wc > w - 2 then
+        break
+      end
+      line:write(cols + x + 1, utf8.char(cp))
+      cols = cols + wc
     end
-    line:write(x + 1 + math.floor((w - 2 - cols) / 2), str)
   end
 end
 

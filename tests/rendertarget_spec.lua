@@ -17,19 +17,22 @@ describe("RenderTarget", function()
 
     do
       local rt = RenderTarget.new()
-      rt:box(0, 0, 4, 3, "に", {
-        h = "─",
-        v = "│",
-        tl = "╭",
-        tr = "╮",
-        bl = "╰",
-        br = "╯",
-      })
+      rt:box(0, 0, 4, 3, "に")
       local rows = {}
       for i, row in rt:render() do
         table.insert(rows, row)
       end
       assert.are_same({ "╭──╮", "│に│", "╰──╯" }, rows)
+    end
+
+    do
+      local rt = RenderTarget.new()
+      rt:box(0, 0, 5, 3, "にぬ")
+      local rows = {}
+      for i, row in rt:render() do
+        table.insert(rows, row)
+      end
+      assert.are_same({ "╭───╮", "│に │", "╰───╯" }, rows)
     end
   end)
 end)
