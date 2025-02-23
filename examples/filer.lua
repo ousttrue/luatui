@@ -15,6 +15,7 @@ local s = Screen.make_tty_screen()
 ---@field type 'file'|'directory'
 
 ---@class Filer
+---@field current string
 ---@field entries Entry[]
 ---@field cursor integer
 local Filer = {}
@@ -33,12 +34,17 @@ end
 
 ---@param dir string
 function Filer:chdir(dir)
-  self.entries = {}
+  local real = uv.fs_realpath(dir)
+  if real then
+    dir = real
+  end
   local fs = uv.fs_scandir(dir)
   if not fs then
     return
   end
 
+  self.current = dir
+  self.entries = {}
   while true do
     local name, type = uv.fs_scandir_next(fs)
     if not name then
@@ -51,23 +57,42 @@ end
 ---@param rt RenderTarget
 ---@param viewport Viewport
 function Filer:render(rt, viewport)
-  local i = 0
+  -- current
+  rt:write(0, 0, self.current, SGR.bold_on)
+
+  local i = 1
   for row = viewport.y, viewport.y + viewport.height - 1 do
-    local e = self.entries[i]
-    if e then
-      local str = ICON_MAP[e.type] .. " " .. e.name
-      rt:write(row, 0, str, row == self.cursor and SGR.invert_on or SGR.reset)
+    if row == viewport.y then
+      --
+    else
+      local e = self.entries[i]
+      if e then
+        local str = ICON_MAP[e.type] .. " " .. e.name
+        rt:write(row, 0, str, i == self.cursor and SGR.invert_on or SGR.reset)
+      end
+      i = i + 1
     end
-    i = i + 1
+  end
+
+  if self.dir then
+    rt:write(viewport.y + viewport.height - 1, 0, self.dir, SGR.invert_on)
   end
 end
 
 ---@param ch string
 function Filer:input(ch)
+  self.last_input = ch
   if ch == "j" then
     self.cursor = self.cursor + 1
   elseif ch == "k" then
     self.cursor = self.cursor - 1
+  elseif ch == "h" then
+    local basename = self.current:match "[^/\\]+$"
+    if basename then
+      local dir = self.current:sub(1, #self.current - #basename)
+      self.dir = dir
+      self:chdir(dir)
+    end
   end
 
   if self.cursor < 1 then

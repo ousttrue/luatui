@@ -97,10 +97,10 @@ end
 ---@param row integer
 ---@return RenderLine
 function RenderTarget:get_or_create_line(row)
-  local line = self.rows[row]
+  local line = self.rows[row + 1]
   if not line then
     line = RenderLine.new()
-    self.rows[row] = line
+    self.rows[row + 1] = line
   end
   return line
 end
