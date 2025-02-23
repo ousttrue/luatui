@@ -48,7 +48,7 @@ function Cell:render()
       return self.char
     end
   else
-    return " "
+    return ""
   end
 end
 

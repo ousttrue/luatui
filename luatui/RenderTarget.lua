@@ -1,4 +1,6 @@
 local RenderLine = require "luatui.RenderLine"
+local utf8 = require "lua-utf8"
+local wcwidth = require "wcwidth"
 
 ---@class RenderTarget
 ---@field rows table<integer, RenderLine>
@@ -34,40 +36,69 @@ function RenderTarget:write(row, col, str, sgr)
   line:write(col, str, sgr)
 end
 
+-- local BOX_OPTS = {
+--   h = "-",
+--   v = "|",
+--   tl = "+",
+--   tr = "+",
+--   bl = "+",
+--   br = "+",
+-- }
+
+local BOX_OPTS = {
+  h = "─",
+  v = "│",
+  tl = "╭",
+  tr = "╮",
+  bl = "╰",
+  br = "╯",
+}
+
 -- ╭─╮
 -- │ │
 -- ╰─╯
-function RenderTarget:box(x, y, w, h, str)
+---@param x integer
+---@param y integer
+---@param w integer
+---@param h integer
+---@param str string?
+---@param box_opts {h: string, v: string, tl:string, tr:string, bl:string, br:string}?
+function RenderTarget:box(x, y, w, h, str, box_opts)
+  box_opts = box_opts or BOX_OPTS
+
   do
     -- top
     local line = self:get_or_create_line(y)
-    line:write(x, "+")
-    assert(line.cells[1].char == "+")
+    line:write(x, box_opts.tl)
     for col = x + 1, x + w - 2 do
-      line:write(col, "-")
+      line:write(col, box_opts.h)
     end
-    line:write(x + w - 1, "+")
+    line:write(x + w - 1, box_opts.tr)
   end
 
   for row = y + 1, y + h - 2 do
     local line = self:get_or_create_line(row)
-    line:write(x, "|")
-    line:write(x + w - 1, "|")
+    line:write(x, box_opts.v)
+    line:write(x + w - 1, box_opts.v)
   end
 
   do
     -- bottom
     local line = self:get_or_create_line(y + h - 1)
-    line:write(x, "+")
+    line:write(x, box_opts.bl)
     for col = x + 1, x + w - 2 do
-      line:write(col, "-")
+      line:write(col, box_opts.h)
     end
-    line:write(x + w - 1, "+")
+    line:write(x + w - 1, box_opts.br)
   end
 
-  do
+  if str then
     local line = self:get_or_create_line(y + math.floor(h / 2))
-    line:write(x + math.floor((w - #str) / 2), str)
+    local cols = 0
+    for _, cp in utf8.codes(str) do
+      cols = cols + wcwidth(cp)
+    end
+    line:write(x + 1 + math.floor((w - 2 - cols) / 2), str)
   end
 end
 

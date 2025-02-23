@@ -4,7 +4,7 @@ describe("Cell", function()
   it("ascii", function()
     do
       local cell = Cell.new()
-      assert.are_same(" ", cell:render())
+      assert.are_same("", cell:render())
     end
   end)
 

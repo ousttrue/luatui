@@ -14,5 +14,11 @@ describe("RenderLine", function()
       line:write(1, "hello")
       assert.are_same(" hello", line:render())
     end
+
+    do
+      local line = RenderLine.new()
+      line:write(1, "に")
+      assert.are_same(" に", line:render())
+    end
   end)
 end)
