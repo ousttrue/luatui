@@ -6,6 +6,7 @@ local uv = require "luv"
 local ICON_MAP = {
   file = " ",
   directory = " ",
+  link = "󱞫 ",
 }
 
 local s = Screen.make_tty_screen()
@@ -67,6 +68,9 @@ function Filer:render(rt, viewport)
     else
       local e = self.entries[i]
       if e then
+        if not ICON_MAP[e.type] then
+          print(e.type)
+        end
         local str = ICON_MAP[e.type] .. " " .. e.name
         rt:write(row, 0, str, i == self.cursor and SGR.invert_on or SGR.reset)
       end

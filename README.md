@@ -1,9 +1,5 @@
 # luatui
 
-## spec
-
-- 1 origin. left-top cell is (1,1)
-
 ## setup
 
 ```sh
@@ -27,4 +23,11 @@ cmake_generator = "Visual Studio 17 2022"
 # pwsh
 > $env:LUA_PATH=$null
 > lua main.lua
+```
+
+## tests
+
+```sh
+> luarocks install busted
+> busted --helper=./tests/_helper.lua ./tests                                              [History]
 ```

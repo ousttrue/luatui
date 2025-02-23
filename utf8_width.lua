@@ -1,6 +1,7 @@
 local wcwidth, utf8 = require "wcwidth", require "lua-utf8"
 assert(utf8)
 
+---@param s string
 local function display_width(s)
   local len = 0
   for _, rune in utf8.codes(s) do
