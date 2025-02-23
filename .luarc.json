@@ -1,7 +1,10 @@
 {
   "workspace": {
-    "checkThirdParty": true,
-    "library": ["${3rd}/luv/library"]
+    "checkThirdParty": false,
+    "library": [
+      "${3rd}/luv/library",
+      "${3rd}/utf8/library"
+    ]
   },
   "runtime.version": "LuaJIT",
   "runtime.special": {

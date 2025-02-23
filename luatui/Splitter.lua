@@ -2,8 +2,14 @@ local Size = require "luatui.Size"
 
 ---@alias KeyCommand 'exit'|nil
 
+---@class Viewport
+---@field x integer
+---@field y integer
+---@field width integer
+---@field height integer
+
 ---@alias OnInput fun(input:{size: Size, data:string, splitter: Splitter}):KeyCommand
----@alias OnRender fun(rt: RenderTarget, viewport:{x:integer, y:integer, width:integer, height:integer})
+---@alias OnRender fun(rt: RenderTarget, viewport:Viewport)
 
 ---@class Callbacks
 ---@field keymap OnInput

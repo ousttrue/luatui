@@ -1,5 +1,48 @@
+---@type utf8
+local utf8 = require "lua-utf8"
+
+---@class Cell
+---@field char string? a character. maybe full width. if perv column is full width, next column is nil.
+---@field sgr integer?
+local Cell = {}
+Cell.__index = Cell
+
+---@param char string?
+---@pram str integer?
+---@return Cell
+function Cell.new(char, sgr)
+  local self = setmetatable({
+    char = char,
+    sgr = sgr,
+  }, Cell)
+  return self
+end
+
+---@param str string
+---@param i integer
+---@return Cell
+function Cell.from_str(str, i, sgr)
+  local self = setmetatable({
+    char = str:sub(i, i),
+    sgr = sgr,
+  }, Cell)
+  return self
+end
+
+---@return string?
+function Cell:render()
+  if self.char then
+    if self.sgr then
+      -- print(self.sgr)
+      return ("\x1b[%dm%s"):format(self.sgr, self.char)
+    else
+      return self.char
+    end
+  end
+end
+
 ---@class RenderLine
----@field cells string[]
+---@field cells Cell[]
 local RenderLine = {}
 RenderLine.__index = RenderLine
 
@@ -11,12 +54,18 @@ function RenderLine.new()
   return self
 end
 
-function RenderLine:write(col, str)
-  while #self.cells < (col + #str) do
-    table.insert(self.cells, " ")
+---@param col integer
+---@param str string
+---@param sgr SGR?
+function RenderLine:write(col, str, sgr)
+  while #self.cells <= (col + #str) do
+    table.insert(self.cells, Cell.new())
   end
-  for i = 1, #str do
-    self.cells[col + i] = str:sub(i, i)
+  local i = col + 1
+  for _, cp in utf8.codes(str) do
+    local cell = Cell.new(utf8.char(cp), sgr)
+    self.cells[i] = cell
+    i = i + 1
   end
 end
 
@@ -24,7 +73,10 @@ end
 function RenderLine:render()
   local str = ""
   for _, c in ipairs(self.cells) do
-    str = str .. c
+    assert(c)
+    if c.char then
+      str = str .. c:render()
+    end
   end
   return str
 end
@@ -56,9 +108,10 @@ end
 ---@param str string
 ---@param row integer
 ---@param col integer
-function RenderTarget:write(row, col, str)
+---@param sgr SGR?
+function RenderTarget:write(row, col, str, sgr)
   local line = self:get_or_create_line(row)
-  line:write(col, str)
+  line:write(col, str, sgr)
 end
 
 -- ╭─╮
@@ -68,13 +121,13 @@ function RenderTarget:box(x, y, w, h, str)
   do
     local line = self:get_or_create_line(y)
     line:write(x, "+")
-    for col = x + 1, x + w - 2 do
+    for col = x, x + w - 2 do
       line:write(col, "-")
     end
     line:write(x + w - 1, "+")
   end
 
-  for row = y + 1, y + h - 2 do
+  for row = y, y + h - 2 do
     local line = self:get_or_create_line(row)
     line:write(x, "|")
     line:write(x + w - 1, "|")
@@ -83,7 +136,7 @@ function RenderTarget:box(x, y, w, h, str)
   do
     local line = self:get_or_create_line(y + h - 1)
     line:write(x, "+")
-    for col = x + 1, x + w - 2 do
+    for col = x, x + w - 2 do
       line:write(col, "-")
     end
     line:write(x + w - 1, "+")

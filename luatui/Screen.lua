@@ -26,10 +26,10 @@ end
 ---@param output uv.uv_write_t
 ---@param rt RenderTarget
 local function flush(uv, output, rt, rows)
-  for i = 0, rows - 1 do
+  for i = 1, rows do
     local line = rt:get_line(i)
     if line then
-      uv.write(output, ("\x1b[%d;1H%s"):format(i + 1, line))
+      uv.write(output, ("\x1b[%d;1H%s"):format(i, line))
     end
   end
 end
@@ -95,11 +95,11 @@ function Screen:run()
     elseif data then
       local keycommand
       if self.focus then
-        keycommand = self.focus.callbacks.keymap({
+        keycommand = self.focus.callbacks.keymap {
           size = self.focus.current_size,
           data = data,
           splitter = self.focus,
-        })
+        }
       end
       self:render()
       if self.on_end_frame then

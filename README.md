@@ -1,5 +1,11 @@
 # luatui
 
+## spec
+
+- 1 origin. left-top cell is (1,1)
+
+## setup
+
 ```sh
 > hererocks -j 2.1 --luarocks latest luarocks
 ```
