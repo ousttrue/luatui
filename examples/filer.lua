@@ -5,7 +5,7 @@ local uv = require "luv"
 
 local ICON_MAP = {
   file = " ",
-  directory = " ",
+  directory = " ",
 }
 
 local s = Screen.make_tty_screen()
@@ -92,6 +92,13 @@ function Filer:input(ch)
       local dir = self.current:sub(1, #self.current - #basename)
       self.dir = dir
       self:chdir(dir)
+    end
+  elseif ch == "\x0d" then
+    local e = self.entries[self.cursor]
+    if e then
+      if e.type == "directory" then
+        self:chdir(self.current .. "/" .. e.name)
+      end
     end
   end
 
