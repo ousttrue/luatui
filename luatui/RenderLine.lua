@@ -18,22 +18,22 @@ end
 ---@param str string
 ---@param sgr SGR?
 function RenderLine:write(i, str, sgr)
-  -- while #self.cells <= (i + #str) do
-  --   table.insert(self.cells, Cell.new())
-  -- end
-  for j = 1, i do
-    self.cells[i] = Cell.new()
+  local col = i + 1
+  for j = 1, col do
+    if not self.cells[j] then
+      self.cells[j] = Cell.new()
+    end
   end
-  i = i + 1
+
   for _, cp in utf8.codes(str) do
     local cell = Cell.new(utf8.char(cp), sgr)
     for j = 1, cell:columns() do
       if j == 1 then
-        self.cells[i] = cell
+        self.cells[col] = cell
       else
         assert(false, "not impl")
       end
-      i = i + 1
+      col = col + 1
     end
   end
 end

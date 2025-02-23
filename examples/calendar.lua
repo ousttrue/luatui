@@ -29,4 +29,6 @@ s.root.callbacks = {
   end,
 }
 
+s:render()
+
 s:run()

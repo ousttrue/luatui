@@ -4,7 +4,9 @@ local utf8 = {}
 
 function utf8.byte() end
 
-function utf8.char() end
+---@param cp integer
+---@return string
+function utf8.char(cp) end
 
 function utf8.find() end
 
