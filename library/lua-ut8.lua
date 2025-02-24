@@ -14,7 +14,9 @@ function utf8.gmatch() end
 
 function utf8.gsub() end
 
-function utf8.len() end
+---@param string
+---@return integer
+function utf8.len(s) end
 
 function utf8.lower() end
 
@@ -26,9 +28,15 @@ function utf8.sub() end
 
 function utf8.upper() end
 
-function utf8.offset() end
+---@param s string
+---@param n integer?
+---@return integer
+function utf8.offset(s, n) end
 
-function utf8.codepoint() end
+---@param s string
+---@param i integer?
+---@return integer
+function utf8.codepoint(s, i) end
 
 ---@param s string
 ---@return fun(s: string, i: integer): integer?, integer
