@@ -33,7 +33,7 @@ local function flush(uv, output, rt, rows)
     if line then
       local last = last_write[i]
       if last ~= line then
--- ESC [ <n> K
+        -- ESC [ <n> K
         uv.write(output, ("\x1b[%d;1H%s\x1b[K"):format(i, line))
         last_write[i] = line
       end
@@ -143,11 +143,11 @@ function Screen:render()
   self.uv.write(self.output, "\x1b[0m")
 
   -- content
-  local rt = RenderTarget.new()
   if self.on_render then
+    local rt = RenderTarget.new()
     self.on_render(rt, self.viewport)
+    flush(self.uv, self.output, rt, self.viewport.height)
   end
-  flush(self.uv, self.output, rt, self.viewport.height)
 end
 
 return Screen

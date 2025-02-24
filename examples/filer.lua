@@ -1,6 +1,8 @@
 local Screen = require "luatui.Screen"
 local SGR = require "luatui.SGR"
 local Splitter = require "luatui.Splitter"
+local Directory = require "luatui.Directory"
+
 ---@type uv
 local uv = require "luv"
 
@@ -12,13 +14,8 @@ local ICON_MAP = {
 
 local s = Screen.make_tty_screen()
 
----@class Entry
----@field name string
----@field type 'file'|'directory'|'link'
-
 ---@class Filer
----@field current string
----@field entries Entry[]
+---@field current Directory|Computar
 ---@field cursor integer
 ---@field root Splitter
 ---@field addressbar Splitter
@@ -28,32 +25,29 @@ local s = Screen.make_tty_screen()
 local Filer = {}
 Filer.__index = Filer
 
----@param dir string?
+---@param dir string
 ---@return Filer
 function Filer.new(dir)
   local self = setmetatable({
     entries = {},
     cursor = 1,
     root = Splitter.new(),
+    current = Directory.new(dir),
   }, Filer)
-
-  if dir then
-    self:chdir(dir)
-  end
 
   -- layout
   local top, mid, bottom = self.root:split_horizontal({ fix = 1 }, {}, { fix = 1 })
 
   self.addressbar = top
   self.addressbar.opts.content = function(rt, viewport)
-    rt:write(viewport.y, viewport.x, self.current, SGR.bold_on)
+    rt:write(viewport.y, viewport.x, tostring(self.current), SGR.bold_on)
   end
 
   self.status = bottom
   self.status.opts.content = function(rt, viewport)
-    if self.dir then
-      rt:write(viewport.y, viewport.x, self.dir, SGR.invert_on)
-    end
+    -- if self.dir then
+    --   rt:write(viewport.y, viewport.x, self.dir, SGR.invert_on)
+    -- end
   end
 
   local l, r = mid:split_vertical({ fix = 24 }, {})
@@ -61,7 +55,7 @@ function Filer.new(dir)
   self.list.opts.content = function(rt, viewport)
     local i = 1
     for row = viewport.y, viewport.y + viewport.height - 1 do
-      local e = self.entries[i]
+      local e = self.current.entries[i]
       if e then
         if not ICON_MAP[e.type] then
           print(e.type)
@@ -78,28 +72,6 @@ function Filer.new(dir)
   return self
 end
 
----@param dir string
-function Filer:chdir(dir)
-  local real = uv.fs_realpath(dir)
-  if real then
-    dir = real
-  end
-  local fs = uv.fs_scandir(dir)
-  if not fs then
-    return
-  end
-
-  self.current = dir
-  self.entries = {}
-  while true do
-    local name, type = uv.fs_scandir_next(fs)
-    if not name then
-      break
-    end
-    table.insert(self.entries, { name = name, type = type })
-  end
-end
-
 ---@param rt RenderTarget
 ---@param viewport Viewport
 function Filer:render(rt, viewport)
@@ -114,34 +86,55 @@ function Filer:input(ch)
   elseif ch == "k" then
     self.cursor = self.cursor - 1
   elseif ch == "h" then
-    local basename = self.current:match "[^/\\]+$"
-    if basename then
-      local dir = self.current:sub(1, #self.current - #basename)
-      self.dir = dir
-      self:chdir(dir)
+    local parent = self.current:get_parent()
+    if parent then
+      self.current = parent
     end
   elseif ch == "l" or ch == "\x0d" then
-    local e = self.entries[self.cursor]
+    local e = self.current.entries[self.cursor]
     if e then
-      if e.type == "directory" then
-        self:chdir(self.current .. "/" .. e.name)
+      local dir = self.current:goto(e)
+      if dir then
+        self.current = dir
       end
     end
   end
 
   if self.cursor < 1 then
     self.cursor = 1
-  elseif self.cursor > #self.entries then
-    self.cursor = #self.entries
+  elseif self.cursor > #self.current.entries then
+    self.cursor = #self.current.entries
   end
 end
 
-local f = Filer.new "."
+local f = Filer.new(".", function()
+  s:render()
+end)
+
+local function set_interval(interval, callback)
+  local timer = uv.new_timer()
+  local function ontimeout()
+    -- p("interval", timer)
+    callback(timer)
+  end
+  uv.timer_start(timer, interval, interval, ontimeout)
+  return timer
+end
+
+local i = set_interval(300, function()
+  s:render()
+end)
+
+local function clear_timeout(timer)
+  uv.timer_stop(timer)
+  uv.close(timer)
+end
 
 s.keymap = function(input)
   if f:input(input.data) then
     --
   elseif input.data == "q" then
+    clear_timeout(i)
     return "exit"
   end
 end
