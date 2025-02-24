@@ -21,7 +21,7 @@ function RenderLine:write(i, str, sgr)
   local col = i + 1
   for j = 1, col do
     if not self.cells[j] then
-      self.cells[j] = Cell.new(' ')
+      self.cells[j] = Cell.new " "
     end
   end
 

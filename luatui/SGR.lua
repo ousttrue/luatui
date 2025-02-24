@@ -1,5 +1,6 @@
 -- https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
 ---@enum SGR Select Graphic Rendition
+--- return ("\x1b[%dm%s"):format(self.sgr, self.char)
 local SGR = {
   reset = 0, --All attributes become turned off
   bold_on = 1,

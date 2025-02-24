@@ -12,6 +12,7 @@ local Viewport = require "luatui.Viewport"
 ---@class SplitterOpts
 ---@field grow true?
 ---@field fix integer?
+---@field content fun(rt:RenderTarget, viewport:Viewport)?
 
 ---@class Splitter
 ---@field callbacks Callbacks?
@@ -83,9 +84,13 @@ function Splitter:render(rt, viewport, opts)
   opts.v = opts.v or "|"
 
   if #self.children == 0 then
-    -- print(viewport)
-    for y = viewport.y, viewport.y + viewport.height - 1 do
-      rt:write(y, viewport.x, fill(" ", viewport.width))
+    -- content
+    if self.opts.content then
+      self.opts.content(rt, viewport)
+    else
+      for y = viewport.y, viewport.y + viewport.height - 1 do
+        rt:write(y, viewport.x, fill(" ", viewport.width))
+      end
     end
   elseif #self.children == 1 then
     assert(false, "#self.children == 1")

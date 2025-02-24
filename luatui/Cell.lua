@@ -13,7 +13,7 @@ Cell.__index = Cell
 function Cell.new(char, sgr)
   local self = setmetatable({
     char = char,
-    sgr = sgr,
+    sgr = sgr or 0,
   }, Cell)
   return self
 end
