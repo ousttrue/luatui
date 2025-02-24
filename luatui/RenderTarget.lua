@@ -28,12 +28,22 @@ function RenderTarget:get_or_create_line(y)
 end
 
 ---@param str string
----@param row integer
----@param col integer
+---@param y integer
+---@param x integer
 ---@param sgr SGR?
-function RenderTarget:write(row, col, str, sgr)
-  local line = self:get_or_create_line(row)
-  line:write(col, str, sgr)
+function RenderTarget:write(y, x, str, sgr)
+  local line = self:get_or_create_line(y)
+  line:write(x, str, sgr)
+end
+
+---@param x integer
+---@param top integer
+---@param height integer
+function RenderTarget:vertical_line(x, top, height)
+  for y = top, top + height - 1 do
+    local line = self:get_or_create_line(y)
+    line:write(x, "|")
+  end
 end
 
 -- local BOX_OPTS = {

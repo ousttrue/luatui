@@ -1,12 +1,6 @@
-local Size = require "luatui.Size"
+local Viewport = require "luatui.Viewport"
 
 ---@alias KeyCommand 'exit'|nil
-
----@class Viewport
----@field x integer
----@field y integer
----@field width integer
----@field height integer
 
 ---@alias OnInput fun(input:{size: Size, data:string, splitter: Splitter}):KeyCommand
 ---@alias OnRender fun(rt: RenderTarget, viewport:Viewport)
@@ -16,67 +10,96 @@ local Size = require "luatui.Size"
 ---@field render OnRender
 
 ---@class Splitter
----@field current_size Size
 ---@field callbacks Callbacks?
 ---@field child_dir 'h'|'v' horizontal or vertical
 ---@field children Splitter[]
 local Splitter = {}
 Splitter.__index = Splitter
 
----@param width integer
----@param height integer
 ---@return Splitter
-function Splitter.new(width, height)
+function Splitter.new()
   local self = setmetatable({
-    current_size = Size.new(width, height),
     child_dir = "v",
     children = {},
   }, Splitter)
   return self
 end
 
+---@param dir 'v'|'h'
 ---@return Splitter
 ---@return Splitter
-function Splitter:split_vertical()
-  self.dir = "v"
-  local item1 = Splitter.new(self.current_size.width / 2, self.current_size.height)
-  if self.callbacks then
-    item1.callbacks = self.callbacks
-    self.callbacks = nil
-  end
-  local item2 = Splitter.new(self.current_size.width / 2, self.current_size.height)
+function Splitter:split(dir)
+  assert(#self.children == 0)
+  self.dir = dir
+  local item1 = Splitter.new()
+  local item2 = Splitter.new()
   self.children = { item1, item2 }
   return item1, item2
 end
 
----@param rt RenderTarget
----@return integer? offset_x
----@return integer? offset_y
-function Splitter:render(rt, offset_x, offset_y)
-  if not offset_x then
-    offset_x = 0
-  end
-  if not offset_y then
-    offset_y = 0
-  end
+---@return Splitter
+---@return Splitter
+function Splitter:split_vertical()
+  return self:split "v"
+end
 
-  if self.callbacks then
-    self.callbacks.render(rt, {
-      y = offset_y,
-      x = offset_x,
-      width = self.current_size.width,
-      height = self.current_size.height,
-    })
+---@return Splitter
+---@return Splitter
+function Splitter:split_horizontal()
+  return self:split "h"
+end
+
+local function fill(str, n)
+  local indent = ""
+  for _ = 1, n do
+    indent = indent .. str
+  end
+  return indent
+end
+
+---@param rt RenderTarget
+---@param  viewport Viewport
+---@param level integer?
+function Splitter:render(rt, viewport, level)
+  level = level or 0
+  if #self.children == 0 then
+    -- print(viewport)
+    for y = viewport.y, viewport.y + viewport.height - 1 do
+      rt:write(y, viewport.x, fill(" ", viewport.width))
+    end
+  elseif #self.children == 1 then
+    assert(false, "#self.children == 1")
   else
-    local offset = 0
-    for _, child in ipairs(self.children) do
-      if self.dir == "v" then
-        child:render(rt, offset_x + offset, offset_y)
-        offset = offset + child.current_size.width
-      elseif self.dir == "h" then
-        child:render(rt, offset_x, offset_y + offset)
-        offset = offset + child.current_size.height
+    if self.dir == "v" then
+      local bn = #self.children - 1
+      local x = 0
+      local child_size = math.floor((viewport.height - bn) / #self.children)
+      for i, child in ipairs(self.children) do
+        if i > 1 then
+          rt:vertical_line(x, viewport.y, viewport.height)
+          x = x + 1
+        end
+        local child_viewport =
+          Viewport.new(x, viewport.y, i ~= #self.children and child_size or viewport.height - x, viewport.height)
+        child:render(rt, child_viewport, level + 1)
+        x = x + child_size
       end
+    elseif self.dir == "h" then
+      local bn = #self.children - 1
+      local y = 0
+      local child_size = math.floor((viewport.height - bn) / #self.children)
+      for i, child in ipairs(self.children) do
+        if i > 1 then
+          --- border
+          rt:write(y, viewport.x, "---")
+          y = y + 1
+        end
+        local child_viewport =
+          Viewport.new(viewport.x, y, viewport.width, i ~= #self.children and child_size or viewport.height - y)
+        child:render(rt, child_viewport, level + 1)
+        y = y + child_size
+      end
+    else
     end
   end
 end
