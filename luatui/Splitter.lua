@@ -70,11 +70,18 @@ local function fill(str, n)
   return indent
 end
 
+---@class RenderOpts
+---@field h string?
+---@field v string?
+
 ---@param rt RenderTarget
 ---@param  viewport Viewport
----@param level integer?
-function Splitter:render(rt, viewport, level)
-  level = level or 0
+---@param opts RenderOpts?
+function Splitter:render(rt, viewport, opts)
+  opts = opts or {}
+  opts.h = opts.h or "-"
+  opts.v = opts.v or "|"
+
   if #self.children == 0 then
     -- print(viewport)
     for y = viewport.y, viewport.y + viewport.height - 1 do
@@ -83,11 +90,11 @@ function Splitter:render(rt, viewport, level)
   elseif #self.children == 1 then
     assert(false, "#self.children == 1")
   else
-    -- vertical
-    -- +---+
-    -- | | |
-    -- +---+
     if self.dir == "v" then
+      -- vertical
+      -- +---+
+      -- | | |
+      -- +---+
       local grow_child_count = 0
       local bn = #self.children - 1
       local remain_size = viewport.width - bn
@@ -106,7 +113,7 @@ function Splitter:render(rt, viewport, level)
       local x = 0
       for i, child in ipairs(self.children) do
         if i > 1 then
-          rt:vertical_line(x, viewport.y, viewport.height)
+          rt:vertical_line(x, viewport.y, viewport.height, opts)
           x = x + 1
         end
         local w
@@ -122,7 +129,7 @@ function Splitter:render(rt, viewport, level)
         end
 
         local child_viewport = Viewport.new(x, viewport.y, w, viewport.height)
-        child:render(rt, child_viewport, level + 1)
+        child:render(rt, child_viewport)
         x = x + w
       end
     elseif self.dir == "h" then
@@ -149,7 +156,7 @@ function Splitter:render(rt, viewport, level)
       for i, child in ipairs(self.children) do
         if i > 1 then
           --- border
-          rt:write(y, viewport.x, fill("-", viewport.width))
+          rt:write(y, viewport.x, fill(opts.h, viewport.width))
           y = y + 1
         end
         local h
@@ -164,7 +171,7 @@ function Splitter:render(rt, viewport, level)
           h = viewport.height - y
         end
         local child_viewport = Viewport.new(viewport.x, y, viewport.width, h)
-        child:render(rt, child_viewport, level + 1)
+        child:render(rt, child_viewport)
         y = y + h
       end
     else

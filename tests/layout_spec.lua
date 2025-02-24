@@ -7,7 +7,7 @@ describe("Layout", function()
     local s = Splitter.new()
     s:split_horizontal({}, {})
     local rt = RenderTarget.new()
-    s:render(rt, Viewport.from_size(3, 3))
+    s:render(rt, Viewport.from_size(3, 3), { h = "─" })
     assert.same(3, #rt.rows)
 
     local rows = {}
@@ -16,7 +16,7 @@ describe("Layout", function()
     end
     assert.are_same({
       { 1, "   " },
-      { 2, "---" },
+      { 2, "───" },
       { 3, "   " },
     }, rows)
   end)
@@ -26,7 +26,7 @@ describe("Layout", function()
     s:split_vertical({}, {})
     assert.same(2, #s.children)
     local rt = RenderTarget.new()
-    s:render(rt, Viewport.from_size(3, 3))
+    s:render(rt, Viewport.from_size(3, 3), { v = "│" })
     assert.same(3, #rt.rows)
 
     local rows = {}
@@ -34,9 +34,9 @@ describe("Layout", function()
       table.insert(rows, row)
     end
     assert.are_same({
-      " | ",
-      " | ",
-      " | ",
+      " │ ",
+      " │ ",
+      " │ ",
     }, rows)
   end)
 

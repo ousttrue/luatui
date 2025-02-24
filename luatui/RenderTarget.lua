@@ -39,10 +39,13 @@ end
 ---@param x integer
 ---@param top integer
 ---@param height integer
-function RenderTarget:vertical_line(x, top, height)
+---@param opts RenderOpts?
+function RenderTarget:vertical_line(x, top, height, opts)
+  opts = opts or {}
+  opts.v = opts.v or "|"
   for y = top, top + height - 1 do
     local line = self:get_or_create_line(y)
-    line:write(x, "|")
+    line:write(x, opts.v)
   end
 end
 
