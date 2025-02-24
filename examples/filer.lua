@@ -151,4 +151,6 @@ s.on_render = function(rt, viewport)
   f:render(rt, viewport)
 end
 
+s:render()
+
 s:run()

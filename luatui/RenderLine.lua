@@ -41,8 +41,10 @@ end
 ---@return string
 function RenderLine:render()
   local str = ""
+  local sgr = nil
   for _, c in ipairs(self.cells) do
-    str = str .. c:render()
+    str = str .. c:render(sgr)
+    sgr = c.sgr
   end
   return str
 end

@@ -38,10 +38,11 @@ function Cell:columns()
   return n
 end
 
+---@param mode SGR?
 ---@return string?
-function Cell:render()
+function Cell:render(mode)
   if self.char then
-    if self.sgr then
+    if self.sgr ~= mode then
       -- print(self.sgr)
       return ("\x1b[%dm%s"):format(self.sgr, self.char)
     else

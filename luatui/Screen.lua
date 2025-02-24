@@ -22,6 +22,8 @@ local function get_winsize(uv, output)
   return 80, 24
 end
 
+local last_write = {}
+
 ---@param uv uv
 ---@param output uv.uv_write_t
 ---@param rt RenderTarget
@@ -29,7 +31,12 @@ local function flush(uv, output, rt, rows)
   for i = 1, rows do
     local line = rt:get_line(i)
     if line then
-      uv.write(output, ("\x1b[%d;1H%s"):format(i, line))
+      local last = last_write[i]
+      if last ~= line then
+-- ESC [ <n> K
+        uv.write(output, ("\x1b[%d;1H%s\x1b[K"):format(i, line))
+        last_write[i] = line
+      end
     end
   end
 end
@@ -56,8 +63,14 @@ function Screen.new(uv, output, input)
     output = output,
     input = input,
   }, Screen)
+  self:clear()
   self:render()
   return self
+end
+
+function Screen:clear()
+  self.uv.write(self.output, "\x1b[1;1H")
+  self.uv.write(self.output, "\x1b[2J")
 end
 
 ---@return Screen
@@ -128,9 +141,6 @@ function Screen:render()
   self.uv.write(self.output, "\x1b[?25l")
   -- clear mode
   self.uv.write(self.output, "\x1b[0m")
-  -- clear
-  self.uv.write(self.output, "\x1b[1;1H")
-  self.uv.write(self.output, "\x1b[2J")
 
   -- content
   local rt = RenderTarget.new()

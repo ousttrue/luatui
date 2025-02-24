@@ -1,3 +1,4 @@
+-- https://learn.microsoft.com/ja-jp/windows/console/console-virtual-terminal-sequences
 -- https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
 ---@enum SGR Select Graphic Rendition
 --- return ("\x1b[%dm%s"):format(self.sgr, self.char)
