@@ -1,4 +1,5 @@
 local Screen = require "luatui.Screen"
+local Splitter = require "luatui.Splitter"
 
 ---@class Cursor
 ---@field cursor_x integer
@@ -34,13 +35,13 @@ function Cursor:input(input)
   -- clamp
   if self.cursor_x < 0 then
     self.cursor_x = 0
-  elseif self.cursor_x >= input.size.width then
-    self.cursor_x = input.size.width - 1
+  elseif self.cursor_x >= input.viewport.width then
+    self.cursor_x = input.viewport.width - 1
   end
   if self.cursor_y < 0 then
     self.cursor_y = 0
-  elseif self.cursor_y >= input.size.height then
-    self.cursor_y = input.size.height - 1
+  elseif self.cursor_y >= input.viewport.height then
+    self.cursor_y = input.viewport.height - 1
   end
   return consumed
 end
@@ -50,12 +51,13 @@ function Cursor:label(viewport)
 end
 
 local s = Screen.make_tty_screen()
-local left, right = s.root:split_vertical()
-s.focus = right
+local root = Splitter.new()
+local left, right = root:split_vertical({}, {})
+local focus = right
 
 local function tab_function(input)
   if input.data == "\t" then
-    s.focus = (s.focus == right) and left or right
+    focus = (focus == right) and left or right
     return true
   end
 end
@@ -80,13 +82,14 @@ local function make_callbacks(c)
 end
 
 local left_cursor = Cursor.new()
-left.callbacks = make_callbacks(left_cursor)
-local right_cursor = Cursor.new()
-right.callbacks = make_callbacks(right_cursor)
+s.keymap = make_callbacks(left_cursor).keymap
+-- local right_cursor = Cursor.new()
+-- right.callbacks = make_callbacks(right_cursor)
 
 s.on_end_frame = function()
-  local x, y = s.root:get_offset(s.focus)
-  local c = s.focus == right and right_cursor or left_cursor
+  -- local x, y = root:get_offset(focus)
+  local x, y = 0, 0
+  local c = focus == right and right_cursor or left_cursor
   s:show_cursor(c.cursor_x + x, c.cursor_y + y)
 end
 

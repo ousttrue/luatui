@@ -1,6 +1,6 @@
 local win32_util = require "luatui.win32_util"
-local Splitter = require "luatui.Splitter"
 local RenderTarget = require "luatui.RenderTarget"
+local Viewport = require "luatui.Viewport"
 
 ---@param uv uv
 ---@param output uv.uv_write_t
@@ -36,10 +36,11 @@ end
 
 ---@class Screen
 ---@field uv uv
+---@field viewport Viewport
 ---@field output uv.uv_write_t
 ---@field input uv.uv_stream_t
----@field root Splitter
----@field focus Splitter?
+---@field keymap fun(input):KeyCommand
+---@field on_render fun(rt: RenderTarget, viewport:Viewport)?
 ---@field on_end_frame fun()?
 local Screen = {}
 Screen.__index = Screen
@@ -51,11 +52,10 @@ function Screen.new(uv, output, input)
   local width, height = get_winsize(uv, output)
   local self = setmetatable({
     uv = uv,
+    viewport = Viewport.from_size(width, height),
     output = output,
     input = input,
-    root = Splitter.new(width, height),
   }, Screen)
-  self.focus = self.root
   self:render()
   return self
 end
@@ -94,11 +94,10 @@ function Screen:run()
       self.uv.close(self.input)
     elseif data then
       local keycommand
-      if self.focus then
-        keycommand = self.focus.callbacks.keymap {
-          size = self.focus.current_size,
+      if self.keymap then
+        keycommand = self.keymap {
+          viewport = self.viewport,
           data = data,
-          splitter = self.focus,
         }
       end
       self:render()
@@ -133,8 +132,10 @@ function Screen:render()
 
   -- content
   local rt = RenderTarget.new()
-  self.root:render(rt)
-  flush(self.uv, self.output, rt, self.root.current_size.height)
+  if self.on_render then
+    self.on_render(rt, self.viewport)
+  end
+  flush(self.uv, self.output, rt, self.viewport.height)
 end
 
 return Screen

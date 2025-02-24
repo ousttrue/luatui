@@ -179,30 +179,30 @@ function Splitter:render(rt, viewport, opts)
   end
 end
 
----@param target Splitter
----@return integer? offset_x
----@return integer? offset_y
-function Splitter:get_offset(target)
-  if self == target then
-    return 0, 0
-  end
-
-  local offset = 0
-  for _, child in ipairs(self.children) do
-    local x, y = child:get_offset(target)
-    if x and y then
-      if self.dir == "v" then
-        return offset + x, y
-      elseif self.dir == "h" then
-        return x, offset + y
-      end
-    end
-    if self.dir == "v" then
-      offset = offset + child.current_size.width
-    elseif self.dir == "h" then
-      offset = offset + child.current_size.height
-    end
-  end
-end
+-- ---@param target Splitter
+-- ---@return integer? offset_x
+-- ---@return integer? offset_y
+-- function Splitter:get_offset(target)
+--   if self == target then
+--     return 0, 0
+--   end
+--
+--   local offset = 0
+--   for _, child in ipairs(self.children) do
+--     local x, y = child:get_offset(target)
+--     if x and y then
+--       if self.dir == "v" then
+--         return offset + x, y
+--       elseif self.dir == "h" then
+--         return x, offset + y
+--       end
+--     end
+--     if self.dir == "v" then
+--       offset = offset + child.current_size.width
+--     elseif self.dir == "h" then
+--       offset = offset + child.current_size.height
+--     end
+--   end
+-- end
 
 return Splitter
