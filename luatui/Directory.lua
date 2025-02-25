@@ -3,24 +3,26 @@ local uv = require "luv"
 local win32_util = require "luatui.win32_util"
 
 ---@class Directory
----@field dir string
+---@field path string
 ---@field entries Entry[]
+---@field selected integer
 local Directory = {}
 Directory.__index = Directory
 
----@param dir string
-function Directory.new(dir)
-  local real = uv.fs_realpath(dir)
+---@param path string
+function Directory.new(path)
+  local real = uv.fs_realpath(path)
   if real then
-    dir = real
+    path = real
   end
 
   local self = setmetatable({
-    dir = dir,
+    path = path,
     entries = {},
+    selected = 1,
   }, Directory)
 
-  local fs = uv.fs_scandir(dir)
+  local fs = uv.fs_scandir(path)
   if fs then
     while true do
       local name, type = uv.fs_scandir_next(fs)
@@ -35,15 +37,23 @@ function Directory.new(dir)
 end
 
 function Directory:__tostring()
-  return self.dir
+  return self.path
 end
 
 ---@return Directory|Computar
 function Directory:get_parent()
-  local basename = self.dir:match "[^/\\]+$"
+  local basename = self.path:match "[^/\\]+$"
   if basename then
-    local dir = self.dir:sub(1, #self.dir - #basename)
-    return Directory.new(dir)
+    local dir_path = self.path:sub(1, #self.path - #basename)
+    local dir = Directory.new(dir_path)
+    for i, e in ipairs(dir.entries) do
+      local real = uv.fs_realpath(dir_path .. "/" .. e.name)
+      if real == self.path then
+        dir.selected = i
+        break
+      end
+    end
+    return dir
   else
     return win32_util.Computar.new()
   end
@@ -53,7 +63,20 @@ end
 ---@return Directory?
 function Directory:goto(e)
   if e.type == "directory" then
-    return Directory.new(self.dir .. "/" .. e.name)
+    return Directory.new(self.path .. "/" .. e.name)
+  end
+end
+
+function Directory:input(ch)
+  if ch == "j" then
+    self.selected = self.selected + 1
+  elseif ch == "k" then
+    self.selected = self.selected - 1
+  end
+  if self.selected < 1 then
+    self.selected = 1
+  elseif self.selected > #self.entries then
+    self.selected = #self.entries
   end
 end
 

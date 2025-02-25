@@ -16,7 +16,6 @@ local s = Screen.make_tty_screen()
 
 ---@class Filer
 ---@field current Directory|Computar
----@field cursor integer
 ---@field root Splitter
 ---@field addressbar Splitter
 ---@field list Splitter
@@ -30,7 +29,6 @@ Filer.__index = Filer
 function Filer.new(dir)
   local self = setmetatable({
     entries = {},
-    cursor = 1,
     root = Splitter.new(),
     current = Directory.new(dir),
   }, Filer)
@@ -45,9 +43,9 @@ function Filer.new(dir)
 
   self.status = bottom
   self.status.opts.content = function(rt, viewport)
-    -- if self.dir then
-    --   rt:write(viewport.y, viewport.x, self.dir, SGR.invert_on)
-    -- end
+    if self.tmp then
+      rt:write(viewport.y, viewport.x, self.tmp, SGR.invert_on)
+    end
   end
 
   local l, r = mid:split_vertical({ fix = 24 }, {})
@@ -61,7 +59,7 @@ function Filer.new(dir)
           print(e.type)
         end
         local str = ICON_MAP[e.type] .. " " .. e.name
-        rt:write(row, 0, str, i == self.cursor and SGR.invert_on or SGR.reset)
+        rt:write(row, 0, str, i == self.current.selected and SGR.invert_on or SGR.reset)
       end
       i = i + 1
     end
@@ -80,18 +78,15 @@ end
 
 ---@param ch string
 function Filer:input(ch)
-  self.last_input = ch
-  if ch == "j" then
-    self.cursor = self.cursor + 1
-  elseif ch == "k" then
-    self.cursor = self.cursor - 1
+  if self.current:input(ch) then
+    --
   elseif ch == "h" then
     local parent = self.current:get_parent()
     if parent then
       self.current = parent
     end
   elseif ch == "l" or ch == "\x0d" then
-    local e = self.current.entries[self.cursor]
+    local e = self.current.entries[self.current.selected]
     if e then
       local dir = self.current:goto(e)
       if dir then
@@ -100,16 +95,10 @@ function Filer:input(ch)
     end
   end
 
-  if self.cursor < 1 then
-    self.cursor = 1
-  elseif self.cursor > #self.current.entries then
-    self.cursor = #self.current.entries
-  end
+  self.tmp = ("%d"):format(self.current.selected)
 end
 
-local f = Filer.new(".", function()
-  s:render()
-end)
+local f = Filer.new "."
 
 local function set_interval(interval, callback)
   local timer = uv.new_timer()
