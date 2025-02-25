@@ -46,13 +46,32 @@ function Filer.new(dir)
   local l, r = mid:split_vertical({ fix = 24 }, {})
   self.list = l
   self.list.opts.content = function(rt, viewport)
-    local list = List.new(self.current.entries)
-    list:render(rt, viewport, self.current.selected)
+    self.tmp = ("%d/%d, scroll=%d"):format(
+      self.current.selected,
+      #self.current.entries,
+      self:get_scroll(viewport.height)
+    )
+    local list = List.new(self.current.entries, {
+      selected = self.current.selected,
+      use_sgr = true,
+      scroll = self:get_scroll(viewport.height),
+    })
+    list:render(rt, viewport)
   end
 
   self.preview = r
 
   return self
+end
+
+---@param height integer
+---@integer
+function Filer:get_scroll(height)
+  local scroll = 1
+  if self.current.selected >= height then
+    scroll = self.current.selected - height + 1
+  end
+  return scroll
 end
 
 ---@param rt RenderTarget
@@ -79,8 +98,6 @@ function Filer:input(ch)
       end
     end
   end
-
-  self.tmp = ("%d"):format(self.current.selected)
 end
 
 local f = Filer.new "."
