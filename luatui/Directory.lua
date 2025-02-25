@@ -1,6 +1,7 @@
 ---@type uv
 local uv = require "luv"
 local win32_util = require "luatui.win32_util"
+local Entry = require "luatui.Entry"
 
 ---@class Directory
 ---@field path string
@@ -29,7 +30,7 @@ function Directory.new(path)
       if not name then
         break
       end
-      table.insert(self.entries, { name = name, type = type })
+      table.insert(self.entries, Entry.new(name, type))
     end
   end
 

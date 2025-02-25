@@ -41,6 +41,7 @@ end
 ---@param mode SGR?
 ---@return string?
 function Cell:render(mode)
+  mode = mode or 0
   if self.char then
     if self.sgr ~= mode then
       -- print(self.sgr)

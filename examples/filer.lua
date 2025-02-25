@@ -2,15 +2,10 @@ local Screen = require "luatui.Screen"
 local SGR = require "luatui.SGR"
 local Splitter = require "luatui.Splitter"
 local Directory = require "luatui.Directory"
+local List = require "luatui.widgets.List"
 
 ---@type uv
 local uv = require "luv"
-
-local ICON_MAP = {
-  file = " ",
-  directory = " ",
-  link = "󱞫 ",
-}
 
 local s = Screen.make_tty_screen()
 
@@ -51,18 +46,8 @@ function Filer.new(dir)
   local l, r = mid:split_vertical({ fix = 24 }, {})
   self.list = l
   self.list.opts.content = function(rt, viewport)
-    local i = 1
-    for row = viewport.y, viewport.y + viewport.height - 1 do
-      local e = self.current.entries[i]
-      if e then
-        if not ICON_MAP[e.type] then
-          print(e.type)
-        end
-        local str = ICON_MAP[e.type] .. " " .. e.name
-        rt:write(row, 0, str, i == self.current.selected and SGR.invert_on or SGR.reset)
-      end
-      i = i + 1
-    end
+    local list = List.new(self.current.entries)
+    list:render(rt, viewport, self.current.selected)
   end
 
   self.preview = r
