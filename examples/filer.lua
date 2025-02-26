@@ -1,13 +1,12 @@
+local args = { ... }
+
 local Screen = require "luatui.Screen"
 local SGR = require "luatui.SGR"
 local Splitter = require "luatui.Splitter"
 local Directory = require "luatui.fs.Directory"
 local List = require "luatui.widgets.List"
-
 ---@type uv
 local uv = require "luv"
-
-local s = Screen.make_tty_screen()
 
 ---@class Filer
 ---@field current Directory|Computar
@@ -93,41 +92,48 @@ function Filer:input(ch)
   end
 end
 
-local f = Filer.new "."
+---@param arg string? start path
+local function main(arg)
+  local s = Screen.make_tty_screen()
 
-local function set_interval(interval, callback)
-  local timer = uv.new_timer()
-  local function ontimeout()
-    -- p("interval", timer)
-    callback(timer)
+  local f = Filer.new(arg or ".")
+
+  local function set_interval(interval, callback)
+    local timer = uv.new_timer()
+    local function ontimeout()
+      -- p("interval", timer)
+      callback(timer)
+    end
+    uv.timer_start(timer, interval, interval, ontimeout)
+    return timer
   end
-  uv.timer_start(timer, interval, interval, ontimeout)
-  return timer
-end
 
-local i = set_interval(300, function()
-  s:render()
-end)
+  local i = set_interval(300, function()
+    s:render()
+  end)
 
-local function clear_timeout(timer)
-  uv.timer_stop(timer)
-  uv.close(timer)
-end
+  local function clear_timeout(timer)
+    uv.timer_stop(timer)
+    uv.close(timer)
+  end
 
-s.keymap = function(input)
-  if f:input(input.data) then
+  s.keymap = function(input)
+    if f:input(input.data) then
     --
-  elseif input.data == "q" then
-    clear_timeout(i)
-    return "exit"
+    elseif input.data == "q" then
+      clear_timeout(i)
+      return "exit"
+    end
   end
+
+  s.on_render = function(rt, viewport)
+    -- 7x5 block
+    f:render(rt, viewport)
+  end
+
+  s:render()
+
+  s:run()
 end
 
-s.on_render = function(rt, viewport)
-  -- 7x5 block
-  f:render(rt, viewport)
-end
-
-s:render()
-
-s:run()
+main(...)
