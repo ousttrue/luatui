@@ -57,26 +57,26 @@ end
 ---@return Directory|Computar
 ---@return integer?
 function Directory:get_parent()
-  if self.parent then
-    return self.parent
-  end
-
   local basename = self.path:match "[^/\\]+$"
-  if basename then
-    local dir_path = self.path:sub(1, #self.path - #basename)
-    local dir = Directory.new(dir_path)
-    local self_element
-    for i, e in ipairs(dir.entries) do
-      local real = uv.fs_realpath(dir_path .. "/" .. e.name)
-      if real == self.path then
-        self_element = (i - 1)
-        break
-      end
-    end
-    return dir, self_element
-  else
+  if not basename then
     return Computar.new()
   end
+
+  local dir_path = self.path:sub(1, #self.path - #basename)
+  local parent = self.parent
+  if not parent then
+    parent = Directory.new(dir_path)
+  end
+
+  local self_element
+  for i, e in ipairs(parent.entries) do
+    local real = uv.fs_realpath(dir_path .. "/" .. e.name)
+    if real == self.path then
+      self_element = (i - 1)
+      break
+    end
+  end
+  return parent, self_element
 end
 
 ---@paramter e Entry
