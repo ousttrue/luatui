@@ -1,6 +1,7 @@
 local RenderLine = require "luatui.RenderLine"
 local utf8 = require "lua-utf8"
 local wcwidth = require "wcwidth"
+local SGR = require "luatui.SGR"
 
 ---@class RenderTarget
 ---@field rows table<integer, RenderLine>
@@ -45,7 +46,7 @@ function RenderTarget:vertical_line(x, top, height, opts)
   opts.v = opts.v or "|"
   for y = top, top + height - 1 do
     local line = self:get_or_create_line(y)
-    line:write(x, opts.v)
+    line:write(x, opts.v, SGR.reset)
   end
 end
 

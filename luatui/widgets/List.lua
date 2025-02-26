@@ -39,21 +39,38 @@ end
 function List:render(rt, viewport)
   local i = self.opts.scroll
   local use_scrolbar = viewport.height < #self.items
-  for y = viewport.y, viewport.y + viewport.height - 1 do
-    local item = self.items[i + 1]
-
-    local src = item and tostring(item) or ""
-    if use_scrolbar then
+  if use_scrolbar then
+    -- scroll
+    for y = viewport.y, viewport.y + viewport.height - 1 do
       local visible = self:is_visible(viewport, y)
-      src = text_util.padding_right(src, viewport.width - 1, " ") .. (visible and "▒" or "░")
-    else
-      src = text_util.padding_right(src, viewport.width, " ")
+      local item = self.items[i + 1]
+      local sgr = SGR.reset
+      if item then
+        local src = tostring(item)
+        src = text_util.padding_right(src, viewport.width - 1, " ") .. (visible and "▒" or "░")
+        if self.opts.use_sgr and i == self.opts.active then
+          sgr = SGR.invert_on
+        end
+        rt:write(y, viewport.x, src, sgr)
+      else
+        local src = text_util.padding_right("", viewport.width - 1, " ") .. (visible and "▒" or "░")
+        rt:write(y, viewport.x, src, sgr)
+      end
+      i = i + 1
     end
-
-    local sgr = self.opts.use_sgr and (i == self.opts.active and SGR.invert_on or SGR.reset) or SGR.reset
-
-    rt:write(y, viewport.x, src, sgr)
-    i = i + 1
+  else
+    -- without scroll
+    for y = viewport.y, viewport.y + viewport.height - 1 do
+      local item = self.items[i + 1]
+      local src = item and tostring(item) or ""
+      src = text_util.padding_right(src, viewport.width, " ")
+      local sgr = SGR.reset
+      if item and self.opts.use_sgr and i == self.opts.active then
+        sgr = SGR.invert_on
+      end
+      rt:write(y, viewport.x, src, sgr)
+      i = i + 1
+    end
   end
 
   self.last_render_height = viewport.height

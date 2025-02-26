@@ -140,6 +140,7 @@ function Screen:render()
   -- hide cursor
   self.uv.write(self.output, "\x1b[?25l")
   -- clear mode
+  self.uv.write(self.output, "\x1b[1;1H")
   self.uv.write(self.output, "\x1b[0m")
 
   -- content

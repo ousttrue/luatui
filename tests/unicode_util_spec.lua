@@ -1,5 +1,6 @@
 local utf8 = require "lua-utf8"
 local wcwidth = require "wcwidth"
+local text_util = require "luatui.text_util"
 
 describe("unicode_util", function()
   it("iter", function()
@@ -18,7 +19,7 @@ describe("unicode_util", function()
         table.insert(i_cp, { i, cp, wcwidth(cp) })
       end
       assert.same({
-        { 1, 97, 1 },
+        { 1, 97,     1 },
         { 2, 0x3042, 2 },
         { 5, 0x6F22, 2 },
       }, i_cp)

@@ -40,11 +40,11 @@ end
 
 ---@return string
 function RenderLine:render()
-  local str = ""
-  local sgr = nil
+  local str = "\x1b[0m"
+  local last_sgr = nil
   for _, c in ipairs(self.cells) do
-    str = str .. c:render(sgr)
-    sgr = c.sgr
+    str = str .. c:render(last_sgr)
+    last_sgr = c.sgr
   end
   return str
 end

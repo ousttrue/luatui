@@ -38,12 +38,12 @@ function Cell:columns()
   return n
 end
 
----@param mode SGR?
+---@param last_sgr SGR?
 ---@return string?
-function Cell:render(mode)
-  mode = mode or 0
+function Cell:render(last_sgr)
+  last_sgr = last_sgr or 0
   if self.char then
-    if self.sgr ~= mode then
+    if self.sgr ~= last_sgr then
       -- print(self.sgr)
       return ("\x1b[%dm%s"):format(self.sgr, self.char)
     else
