@@ -29,6 +29,11 @@ function List.new(items, opts)
   return self
 end
 
+---@return any?
+function List:get_active()
+  return self.items[self.opts.selected + 1]
+end
+
 ---@param rt RenderTarget
 ---@param viewport Viewport
 function List:render(rt, viewport)

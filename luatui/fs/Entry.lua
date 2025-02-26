@@ -1,6 +1,8 @@
+local icons_by_file_extension = require "luatui.nvim-web-devicons.default.icons_by_file_extension"
+
 local ICON_MAP = {
   file = " ",
-  directory = " ",
+  directory = " ",
   link = "󱞫 ",
 }
 
@@ -28,11 +30,31 @@ function Entry.make_dir(dir)
 end
 
 ---@return string
-function Entry:__tostring()
-  if not ICON_MAP[self.type] then
+function Entry:get_icon()
+  if self.type == "file" then
+    local ext = self.name:match "[^%.]+$"
+    local icon = icons_by_file_extension[ext]
+    if icon then
+      return icon.icon .. " "
+    end
+  elseif self.type == "directory" then
+    if self.name == ".git" then
+      return " "
+    elseif self.name == ".vscode" then
+      return " "
+    elseif self.name == "node_modules" then
+      return " "
+    end
+  elseif not ICON_MAP[self.type] then
     print(self.type)
   end
-  local str = ICON_MAP[self.type] .. " " .. self.name
+
+  return ICON_MAP[self.type]
+end
+
+---@return string
+function Entry:__tostring()
+  local str = self:get_icon() .. " " .. self.name
   return str
 end
 

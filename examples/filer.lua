@@ -46,7 +46,12 @@ function Filer.new(dir)
   local l, r = mid:split_vertical({ fix = 24 }, {})
   self.left = l
   self.left.opts.content = function(rt, viewport)
-    self.tmp = ("%d/%d, scroll=%d"):format(self.list.opts.selected, #self.current.entries, self.list.opts.scroll)
+    self.tmp = ("%d/%d, scroll=%d, %s"):format(
+      self.list.opts.selected,
+      #self.current.entries,
+      self.list.opts.scroll,
+      self.list:get_active()
+    )
     self.list:render(rt, viewport)
   end
 
