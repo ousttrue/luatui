@@ -9,6 +9,7 @@ local text_util = require "luatui.text_util"
 ---@class List
 ---@field items any[]
 ---@field opts ListOpts
+---@field last_render_height integer
 local List = {}
 List.__index = List
 
@@ -22,6 +23,7 @@ function List.new(items, opts)
       selected = opts and opts.selected or 0,
       scroll = opts and opts.scroll or 0,
       use_sgr = opts and opts.use_sgr or false,
+      last_render_height = 0,
     },
   }, List)
   return self
@@ -48,6 +50,8 @@ function List:render(rt, viewport)
     rt:write(y, viewport.x, src, sgr)
     i = i + 1
   end
+
+  self.last_render_height = viewport.height
 end
 
 -- items=4, height:3, y=0, scroll=1 =>false
@@ -75,6 +79,27 @@ function List:is_visible(viewport, y)
     return false
   end
   return true
+end
+
+function List:input(ch)
+  if ch == "j" then
+    self.opts.selected = self.opts.selected + 1
+  elseif ch == "k" then
+    self.opts.selected = self.opts.selected - 1
+  end
+  if self.opts.selected < 0 then
+    self.opts.selected = 0
+  elseif self.opts.selected >= #self.items then
+    self.opts.selected = #self.items - 1
+  end
+
+  if self.last_render_height > 0 then
+    if self.opts.selected < self.opts.scroll then
+      self.opts.scroll = self.opts.selected
+    elseif self.opts.selected >= self.opts.scroll + self.last_render_height - 1 then
+      self.opts.scroll = self.opts.selected - self.last_render_height + 1
+    end
+  end
 end
 
 return List

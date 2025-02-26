@@ -6,7 +6,6 @@ local Entry = require "luatui.Entry"
 ---@class Directory
 ---@field path string
 ---@field entries Entry[]
----@field selected integer
 local Directory = {}
 Directory.__index = Directory
 
@@ -20,7 +19,6 @@ function Directory.new(path)
   local self = setmetatable({
     path = path,
     entries = {},
-    selected = 0,
   }, Directory)
 
   local fs = uv.fs_scandir(path)
@@ -42,19 +40,21 @@ function Directory:__tostring()
 end
 
 ---@return Directory|Computar
+---@return integer?
 function Directory:get_parent()
   local basename = self.path:match "[^/\\]+$"
   if basename then
     local dir_path = self.path:sub(1, #self.path - #basename)
     local dir = Directory.new(dir_path)
+    local selected
     for i, e in ipairs(dir.entries) do
       local real = uv.fs_realpath(dir_path .. "/" .. e.name)
       if real == self.path then
-        dir.selected = (i - 1)
+        selected = (i - 1)
         break
       end
     end
-    return dir
+    return dir, selected
   else
     return win32_util.Computar.new()
   end
@@ -65,19 +65,6 @@ end
 function Directory:goto(e)
   if e.type == "directory" then
     return Directory.new(self.path .. "/" .. e.name)
-  end
-end
-
-function Directory:input(ch)
-  if ch == "j" then
-    self.selected = self.selected + 1
-  elseif ch == "k" then
-    self.selected = self.selected - 1
-  end
-  if self.selected < 0 then
-    self.selected = 0
-  elseif self.selected >= #self.entries then
-    self.selected = #self.entries - 1
   end
 end
 

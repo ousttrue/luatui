@@ -11,9 +11,10 @@ local s = Screen.make_tty_screen()
 
 ---@class Filer
 ---@field current Directory|Computar
+---@field list List
 ---@field root Splitter
 ---@field addressbar Splitter
----@field list Splitter
+---@field left Splitter
 ---@field preview Splitter
 ---@field status Splitter
 local Filer = {}
@@ -25,8 +26,8 @@ function Filer.new(dir)
   local self = setmetatable({
     entries = {},
     root = Splitter.new(),
-    current = Directory.new(dir),
   }, Filer)
+  self:set_dir(Directory.new(dir))
 
   -- layout
   local top, mid, bottom = self.root:split_horizontal({ fix = 1 }, {}, { fix = 1 })
@@ -44,19 +45,10 @@ function Filer.new(dir)
   end
 
   local l, r = mid:split_vertical({ fix = 24 }, {})
-  self.list = l
-  self.list.opts.content = function(rt, viewport)
-    self.tmp = ("%d/%d, scroll=%d"):format(
-      self.current.selected,
-      #self.current.entries,
-      self:get_scroll(viewport.height)
-    )
-    local list = List.new(self.current.entries, {
-      selected = self.current.selected,
-      use_sgr = true,
-      scroll = self:get_scroll(viewport.height),
-    })
-    list:render(rt, viewport)
+  self.left = l
+  self.left.opts.content = function(rt, viewport)
+    self.tmp = ("%d/%d, scroll=%d"):format(self.list.opts.selected, #self.current.entries, self.list.opts.scroll)
+    self.list:render(rt, viewport)
   end
 
   self.preview = r
@@ -64,14 +56,15 @@ function Filer.new(dir)
   return self
 end
 
----@param height integer
----@integer
-function Filer:get_scroll(height)
-  local scroll = 0
-  if self.current.selected >= height - 1 then
-    scroll = self.current.selected - height + 1
-  end
-  return scroll
+---@param dir Directory|Computar
+---@param selected integer?
+function Filer:set_dir(dir, selected)
+  self.current = dir
+  -- self.list = List.new(self.current.entries)
+  self.list = List.new(self.current.entries, {
+    selected = selected,
+    use_sgr = true,
+  })
 end
 
 ---@param rt RenderTarget
@@ -82,19 +75,19 @@ end
 
 ---@param ch string
 function Filer:input(ch)
-  if self.current:input(ch) then
+  if self.list:input(ch) then
     --
   elseif ch == "h" then
-    local parent = self.current:get_parent()
+    local parent, selected = self.current:get_parent()
     if parent then
-      self.current = parent
+      self:set_dir(parent, selected)
     end
   elseif ch == "l" or ch == "\x0d" then
-    local e = self.current.entries[self.current.selected + 1]
+    local e = self.current.entries[self.list.opts.selected + 1]
     if e then
       local dir = self.current:goto(e)
       if dir then
-        self.current = dir
+        self:set_dir(dir)
       end
     end
   end
