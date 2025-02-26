@@ -29,5 +29,5 @@ cmake_generator = "Visual Studio 17 2022"
 
 ```sh
 > luarocks install busted
-> busted --helper=./tests/_helper.lua ./tests                                              [History]
+> busted -v --helper=./tests/_helper.lua ./tests
 ```

@@ -1,7 +1,7 @@
 local Screen = require "luatui.Screen"
 local SGR = require "luatui.SGR"
 local Splitter = require "luatui.Splitter"
-local Directory = require "luatui.Directory"
+local Directory = require "luatui.fs.Directory"
 local List = require "luatui.widgets.List"
 
 ---@type uv

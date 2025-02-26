@@ -1,7 +1,7 @@
 ---@type uv
 local uv = require "luv"
-local win32_util = require "luatui.win32_util"
-local Entry = require "luatui.Entry"
+local Computar = require "luatui.fs.Computar"
+local Entry = require "luatui.fs.Entry"
 
 ---@class Directory
 ---@field path string
@@ -56,7 +56,7 @@ function Directory:get_parent()
     end
     return dir, selected
   else
-    return win32_util.Computar.new()
+    return Computar.new()
   end
 end
 
