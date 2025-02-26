@@ -56,6 +56,13 @@ function Filer.new(dir)
   end
 
   self.preview = r
+  self.preview.opts.content = function(rt, viewport)
+    local active = self.list:get_active()
+    if active then
+      ---@cast active Entry
+      active:render_preview(rt, viewport)
+    end
+  end
 
   return self
 end

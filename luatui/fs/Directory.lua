@@ -32,7 +32,8 @@ function Directory.new(path, parent)
       if not name then
         break
       end
-      table.insert(self.entries, Entry.new(name, type))
+
+      table.insert(self.entries, Entry.from_dir_name(type, path, name))
     end
     table.sort(self.entries, function(a, b)
       if a.type == b.type then
