@@ -34,6 +34,17 @@ function Directory.new(path, parent)
       end
       table.insert(self.entries, Entry.new(name, type))
     end
+    table.sort(self.entries, function(a, b)
+      if a.type == b.type then
+        return a.name:upper() < b.name:upper()
+      else
+        if a.type == "directory" then
+          return true
+        else
+          return false
+        end
+      end
+    end)
   end
 
   return self
@@ -54,15 +65,15 @@ function Directory:get_parent()
   if basename then
     local dir_path = self.path:sub(1, #self.path - #basename)
     local dir = Directory.new(dir_path)
-    local selected
+    local self_element
     for i, e in ipairs(dir.entries) do
       local real = uv.fs_realpath(dir_path .. "/" .. e.name)
       if real == self.path then
-        selected = (i - 1)
+        self_element = (i - 1)
         break
       end
     end
-    return dir, selected
+    return dir, self_element
   else
     return Computar.new()
   end

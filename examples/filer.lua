@@ -47,7 +47,7 @@ function Filer.new(dir)
   self.left = l
   self.left.opts.content = function(rt, viewport)
     self.tmp = ("%d/%d, scroll=%d, %s"):format(
-      self.list.opts.selected,
+      self.list.opts.active,
       #self.current.entries,
       self.list.opts.scroll,
       self.list:get_active()
@@ -61,12 +61,12 @@ function Filer.new(dir)
 end
 
 ---@param dir Directory|Computar
----@param selected integer?
-function Filer:set_dir(dir, selected)
+---@param active integer?
+function Filer:set_dir(dir, active)
   self.current = dir
   -- self.list = List.new(self.current.entries)
   self.list = List.new(self.current.entries, {
-    selected = selected,
+    active = active,
     use_sgr = true,
   })
 end
@@ -82,12 +82,12 @@ function Filer:input(ch)
   if self.list:input(ch) then
     --
   elseif ch == "h" then
-    local parent, selected = self.current:get_parent()
+    local parent, active = self.current:get_parent()
     if parent then
-      self:set_dir(parent, selected)
+      self:set_dir(parent, active)
     end
   elseif ch == "l" or ch == "\x0d" then
-    local e = self.current.entries[self.list.opts.selected + 1]
+    local e = self.current.entries[self.list.opts.active + 1]
     if e then
       local dir = self.current:goto(e)
       if dir then

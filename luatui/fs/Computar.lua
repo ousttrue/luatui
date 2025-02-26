@@ -58,7 +58,7 @@ function Computar.new()
 end
 
 function Computar:__tostring()
-  return "computar"
+  return "󰖳 "
 end
 
 function Computar:get_parent() end

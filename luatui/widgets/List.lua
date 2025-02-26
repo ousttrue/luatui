@@ -2,7 +2,7 @@ local SGR = require "luatui.SGR"
 local text_util = require "luatui.text_util"
 
 ---@class ListOpts
----@field selected integer?
+---@field active integer?
 ---@field scroll integer?
 ---@field use_sgr boolean?
 
@@ -20,7 +20,7 @@ function List.new(items, opts)
   local self = setmetatable({
     items = items,
     opts = {
-      selected = opts and opts.selected or 0,
+      active = opts and opts.active or 0,
       scroll = opts and opts.scroll or 0,
       use_sgr = opts and opts.use_sgr or false,
       last_render_height = 0,
@@ -31,7 +31,7 @@ end
 
 ---@return any?
 function List:get_active()
-  return self.items[self.opts.selected + 1]
+  return self.items[self.opts.active + 1]
 end
 
 ---@param rt RenderTarget
@@ -50,7 +50,7 @@ function List:render(rt, viewport)
       src = text_util.padding_right(src, viewport.width, " ")
     end
 
-    local sgr = self.opts.use_sgr and (i == self.opts.selected and SGR.invert_on or SGR.reset) or SGR.reset
+    local sgr = self.opts.use_sgr and (i == self.opts.active and SGR.invert_on or SGR.reset) or SGR.reset
 
     rt:write(y, viewport.x, src, sgr)
     i = i + 1
@@ -88,21 +88,21 @@ end
 
 function List:input(ch)
   if ch == "j" then
-    self.opts.selected = self.opts.selected + 1
+    self.opts.active = self.opts.active + 1
   elseif ch == "k" then
-    self.opts.selected = self.opts.selected - 1
+    self.opts.active = self.opts.active - 1
   end
-  if self.opts.selected < 0 then
-    self.opts.selected = 0
-  elseif self.opts.selected >= #self.items then
-    self.opts.selected = #self.items - 1
+  if self.opts.active < 0 then
+    self.opts.active = 0
+  elseif self.opts.active >= #self.items then
+    self.opts.active = #self.items - 1
   end
 
   if self.last_render_height > 0 then
-    if self.opts.selected < self.opts.scroll then
-      self.opts.scroll = self.opts.selected
-    elseif self.opts.selected >= self.opts.scroll + self.last_render_height - 1 then
-      self.opts.scroll = self.opts.selected - self.last_render_height + 1
+    if self.opts.active < self.opts.scroll then
+      self.opts.scroll = self.opts.active
+    elseif self.opts.active >= self.opts.scroll + self.last_render_height - 1 then
+      self.opts.scroll = self.opts.active - self.last_render_height + 1
     end
   end
 end
