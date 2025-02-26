@@ -9,7 +9,6 @@ local text_util = require "luatui.text_util"
 ---@class List
 ---@field items any[]
 ---@field opts ListOpts
----@field last_render_height integer
 local List = {}
 List.__index = List
 
@@ -23,7 +22,6 @@ function List.new(items, opts)
       active = opts and opts.active or 0,
       scroll = opts and opts.scroll or 0,
       use_sgr = opts and opts.use_sgr or false,
-      last_render_height = 0,
     },
   }, List)
   return self
@@ -37,6 +35,12 @@ end
 ---@param rt RenderTarget
 ---@param viewport Viewport
 function List:render(rt, viewport)
+  if self.opts.active < self.opts.scroll then
+    self.opts.scroll = self.opts.active
+  elseif self.opts.active >= self.opts.scroll + viewport.height - 1 then
+    self.opts.scroll = self.opts.active - viewport.height + 1
+  end
+
   local i = self.opts.scroll
   local use_scrolbar = viewport.height < #self.items
   if use_scrolbar then
@@ -72,8 +76,6 @@ function List:render(rt, viewport)
       i = i + 1
     end
   end
-
-  self.last_render_height = viewport.height
 end
 
 -- items=4, height:3, y=0, scroll=1 =>false
@@ -113,14 +115,6 @@ function List:input(ch)
     self.opts.active = 0
   elseif self.opts.active >= #self.items then
     self.opts.active = #self.items - 1
-  end
-
-  if self.last_render_height > 0 then
-    if self.opts.active < self.opts.scroll then
-      self.opts.scroll = self.opts.active
-    elseif self.opts.active >= self.opts.scroll + self.last_render_height - 1 then
-      self.opts.scroll = self.opts.active - self.last_render_height + 1
-    end
   end
 end
 
