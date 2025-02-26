@@ -67,8 +67,8 @@ end
 ---@param height integer
 ---@integer
 function Filer:get_scroll(height)
-  local scroll = 1
-  if self.current.selected >= height then
+  local scroll = 0
+  if self.current.selected >= height - 1 then
     scroll = self.current.selected - height + 1
   end
   return scroll
@@ -90,7 +90,7 @@ function Filer:input(ch)
       self.current = parent
     end
   elseif ch == "l" or ch == "\x0d" then
-    local e = self.current.entries[self.current.selected]
+    local e = self.current.entries[self.current.selected + 1]
     if e then
       local dir = self.current:goto(e)
       if dir then

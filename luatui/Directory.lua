@@ -20,7 +20,7 @@ function Directory.new(path)
   local self = setmetatable({
     path = path,
     entries = {},
-    selected = 1,
+    selected = 0,
   }, Directory)
 
   local fs = uv.fs_scandir(path)
@@ -50,7 +50,7 @@ function Directory:get_parent()
     for i, e in ipairs(dir.entries) do
       local real = uv.fs_realpath(dir_path .. "/" .. e.name)
       if real == self.path then
-        dir.selected = i
+        dir.selected = (i - 1)
         break
       end
     end
@@ -74,10 +74,10 @@ function Directory:input(ch)
   elseif ch == "k" then
     self.selected = self.selected - 1
   end
-  if self.selected < 1 then
-    self.selected = 1
-  elseif self.selected > #self.entries then
-    self.selected = #self.entries
+  if self.selected < 0 then
+    self.selected = 0
+  elseif self.selected >= #self.entries then
+    self.selected = #self.entries - 1
   end
 end
 
