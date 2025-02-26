@@ -43,8 +43,11 @@ function RenderLine:render()
   local str = "\x1b[0m"
   local last_sgr = nil
   for _, c in ipairs(self.cells) do
-    str = str .. c:render(last_sgr)
-    last_sgr = c.sgr
+    local rendered, sgr = c:render(last_sgr)
+    if rendered then
+      str = str .. rendered
+      last_sgr = sgr
+    end
   end
   return str
 end

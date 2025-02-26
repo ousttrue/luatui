@@ -28,8 +28,8 @@ local last_write = {}
 ---@param output uv.uv_write_t
 ---@param rt RenderTarget
 local function flush(uv, output, rt, rows)
-  for i = 1, rows do
-    local line = rt:get_line(i)
+  -- for i = 1, rows do
+  for i, line in rt:render() do
     if line then
       local last = last_write[i]
       if last ~= line then

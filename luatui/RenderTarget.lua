@@ -120,19 +120,12 @@ function RenderTarget:box(x, y, w, h, str, box_opts)
   end
 end
 
----@param i integer
----@return string? line
-function RenderTarget:get_line(i)
-  local line = self.rows[i]
-  if line then
-    return line:render()
-  end
-end
-
 ---@return fun(rows:RenderLine[], i:integer):integer, string
 ---@return RenderLine[]
 ---@return integer row
 function RenderTarget:render()
+  ---@param rows RenderLine[]
+  ---@param _i integer
   local function iter(rows, _i)
     local i = _i + 1
     local row = rows[i]

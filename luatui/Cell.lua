@@ -40,17 +40,16 @@ end
 
 ---@param last_sgr SGR?
 ---@return string?
+---@return SGR?
 function Cell:render(last_sgr)
   last_sgr = last_sgr or 0
-  if self.char then
+  if self.char and #self.char > 0 then
     if self.sgr ~= last_sgr then
       -- print(self.sgr)
-      return ("\x1b[%dm%s"):format(self.sgr, self.char)
+      return ("\x1b[%dm%s"):format(self.sgr, self.char), self.sgr
     else
-      return self.char
+      return self.char, self.sgr
     end
-  else
-    return ""
   end
 end
 
