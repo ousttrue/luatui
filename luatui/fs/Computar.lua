@@ -67,7 +67,7 @@ function Computar:get_parent() end
 ---@return Directory
 function Computar:goto(e)
   local Directory = require "luatui.fs.Directory"
-  return Directory.new(e.name)
+  return Directory.new(e.name, self)
 end
 
 return Computar

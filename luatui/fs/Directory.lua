@@ -6,11 +6,14 @@ local Entry = require "luatui.fs.Entry"
 ---@class Directory
 ---@field path string
 ---@field entries Entry[]
+---@field parent? Directory|Computar
 local Directory = {}
 Directory.__index = Directory
 
 ---@param path string
-function Directory.new(path)
+---@param parent Directory|Computar|nil
+---@return Directory
+function Directory.new(path, parent)
   local real = uv.fs_realpath(path)
   if real then
     path = real
@@ -19,6 +22,7 @@ function Directory.new(path)
   local self = setmetatable({
     path = path,
     entries = {},
+    parent = parent,
   }, Directory)
 
   local fs = uv.fs_scandir(path)
@@ -42,6 +46,10 @@ end
 ---@return Directory|Computar
 ---@return integer?
 function Directory:get_parent()
+  if self.parent then
+    return self.parent
+  end
+
   local basename = self.path:match "[^/\\]+$"
   if basename then
     local dir_path = self.path:sub(1, #self.path - #basename)
@@ -64,7 +72,7 @@ end
 ---@return Directory?
 function Directory:goto(e)
   if e.type == "directory" then
-    return Directory.new(self.path .. "/" .. e.name)
+    return Directory.new(self.path .. "/" .. e.name, self)
   end
 end
 
